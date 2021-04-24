@@ -7,6 +7,8 @@ import speech_recognition as sr
 from gtts import gTTS
 import os
 from playsound import playsound
+from django.http import JsonResponse
+
 def signup_view(request):
     if request.user.is_authenticated:
         return redirect("myapp:home")
@@ -164,6 +166,8 @@ def login_view(request):
         i = i + str(1)
 
         flag = True
+        addr=''
+        passs=''
         while (flag):
             texttospeech("Enter your Email", file + i)
             i = i + str(1)
@@ -205,25 +209,30 @@ def login_view(request):
             passs = convert_special_char(passs)
 
 
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            email = request.POST['email']
-            password = request.POST['password']
-            auth_code = form.cleaned_data.get('auth_code')
-            user = authenticate(email=em, password=pas)
+        # form = LoginForm(email=addr,password=passs,auth_code='1010101010')
+        if True:
+            # email = addr
+            # password = passs
+            auth_code = '1010101010'
+            user = authenticate(email=addr, password=passs)
             print("************USER******=", user)
             print("valid")
             if user is not None and auth_code == user.auth_code:
                 login(request, user)
-                return redirect("myapp:home")
+                # return render(request, 'myapp/home.html', {'addr':addr})
+                return JsonResponse({'result' : 'success'})
             else:
-                context['form'] = form
+                # context['form'] = form
                 context['message'] = 'Incorrect Authentication Code!'
+                texttospeech("Please enter correct email and password !",file+i)
+                i = i + str(1)
+                return JsonResponse({'result' : 'failure'})
         else:
             print(addr)
             print('tf')
             context['message'] = 'Please enter correct email and password !'
-            context['form'] = form
+            # context['form'] = form
+            return JsonResponse({'result' : 'failure'})
     else:
         context['form'] = LoginForm()
         
