@@ -29,6 +29,8 @@
 
 </head>
 <body>
+	<body onload = "SendPostRequestHome(event)">
+
     <div class="limiter">
 		<div class="container-login100">
 			<div class="wrap-login100">
@@ -108,5 +110,24 @@
 <!--===============================================================================================-->
 	<script src="{% static 'js/main.js' %}"></script>
 
+
+	<script>
+		function SendPostRequestHome(event){
+			$.ajax({
+			url: "{% url 'myapp:login' %}",
+			method: 'POST',
+			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
+			success: function (data) {
+			
+				if(data.result == 'success'){
+					window.location = "{% url 'myapp:home' %}";
+				}
+				else if(data.result == 'failure'){
+					window.location = "{% url 'myapp:login' %}";
+				}
+			}
+		});
+		}
+		</script>
 </body>
 </html>
