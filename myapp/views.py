@@ -8,22 +8,56 @@ from gtts import gTTS
 import os
 from playsound import playsound
 from django.http import JsonResponse
-
+from django.shortcuts import get_object_or_404
 def signup_view(request):
     if request.user.is_authenticated:
         return redirect("myapp:home")
     if request.method == 'POST':
         print(request.POST)
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            form.save()
-            email = form.cleaned_data.get('email')
-            password = form.cleaned_data.get('password1')
-            user = authenticate(email=email, password=password)
+        file = 'test'
+        i = '1'
+        text1 = "Welcome to our Voice Based Email Portal. SignIn with your email account to continue. "
+        texttospeech(text1, file + i)
+        i = i + str(1)
+        email = introVoice('email',file,i)
+        print(email)
+        UserObj = User.objects.filter(email=email).first()
+        print(UserObj)
+        # UserObj = get_object_or_404(User, email=email)
+        if(UserObj):
+            texttospeech("Already Exists, Try Again", file + i)
+            i = i + str(1)
+            return JsonResponse({'result' : 'failure'})
+        passs = introVoice('password',file,i)
+        # confirmPass = introVoice('password again',file,i)
+        try:
+            obj = User.objects.create(email=email,password=passs)
+            print(obj)
+        except:
+            print("Some error")
+            texttospeech("There was some error, Please try again")
+            return JsonResponse({'result' : 'failure'})
+        # form = SignUpForm(email=email,password=passs,auth_code='1010101010')
+        # if True:
+        #     auth_code = '1010101010'
+        #     user = authenticate(email=email, password=passs)
+        #     print("************USER******=", user)
+        #     print("valid")
+        #     return JsonResponse({'result' : 'success'})
+        # else:
+        #     print(addr)
+        #     print('tf')
+        #     context['message'] = 'Please enter correct email and password !'
+        #     # context['form'] = form
+        #     return JsonResponse({'result' : 'failure'})
+        if True:
+            # email = form.cleaned_data.get('email')
+            # password = form.cleaned_data.get('password1')
+            user = authenticate(email=email, password=passs)
             # login(request, user)
-            return redirect("myapp:login")
+            return JsonResponse({'result' : 'success'})
         else:
-            return render(request, 'myapp/signup.html', {'form': form})
+            return JsonResponse({'result' : 'failure'})
     else:
         form = SignUpForm()
         return render(request, 'myapp/signup.html', {'form': form})
@@ -35,11 +69,36 @@ def home_view(request):
     user = request.user
     if not user.is_authenticated:
         return redirect("myapp:first")
-
+    if request.method == 'POST':
+        introVoice()
     context['auth_code'] = user.auth_code
     context['email'] = user.email
     return render(request, 'myapp/home.html', context)
 
+def ActionVoice():
+    flag = True
+    addr=''
+    passs=''
+    while (flag):
+        texttospeech("Enter your"+email, file + i)
+        i = i + str(1)
+        addr = speechtotext(10)
+        if addr != 'N':
+            texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
+            
+            i = i + str(1)
+            say = speechtotext(10)
+            print(say)
+            if say == 'yes' or say == 'Yes' or say=='yes yes':
+                flag = False
+                addr = addr.strip()
+                addr = addr.replace(' ', '')
+                addr = addr.lower()
+                addr = convert_special_char(addr)
+                return addr
+        else:
+            texttospeech("could not understand what you meant:", file + i)
+            i = i + str(1)
 
 def first(request):
     context = {}
@@ -85,7 +144,7 @@ def speechtotext(duration):
 
 def convert_special_char(text):
     temp=text
-    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash']
+    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate']
     for character in special_chars:
         while(True):
             pos=temp.find(character)
@@ -110,6 +169,8 @@ def convert_special_char(text):
                     temp = temp.replace('space', '')
                 elif character == 'dash':
                     temp=temp.replace('dash','-')
+                elif character == 'at the rate':
+                    temp=temp.replace('at the rate','@')
     return temp.strip()
 
 # def login_view(request):
@@ -148,73 +209,48 @@ def logout_view(request):
     return redirect("myapp:first")
 
 
+def introVoice(email,file,i):
+    flag = True
+    addr=''
+    passs=''
+    while (flag):
+        texttospeech("Enter your"+email, file + i)
+        i = i + str(1)
+        addr = speechtotext(10)
+        if addr != 'N':
+            texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
+            
+            i = i + str(1)
+            say = speechtotext(10)
+            print(say)
+            if say == 'yes' or say == 'Yes' or say=='yes yes':
+                flag = False
+                addr = addr.strip()
+                addr = addr.replace(' ', '')
+                addr = addr.lower()
+                addr = convert_special_char(addr)
+                return addr
+        else:
+            texttospeech("could not understand what you meant:", file + i)
+            i = i + str(1)
+        
+
 def login_view(request):
     context = {}
     if request.user.is_authenticated:
         return redirect("myapp:home")
-    
-
-    
-
-    
-    
     if request.method == 'POST':
-        text1 = "Welcome to our Voice Based Email Portal. Login with your email account to continue. "
         file = 'test'
         i = '1'
+        text1 = "Welcome to our Voice Based Email Portal. Login with your email account to continue. "
         texttospeech(text1, file + i)
         i = i + str(1)
-
-        flag = True
-        addr=''
-        passs=''
-        while (flag):
-            texttospeech("Enter your Email", file + i)
-            i = i + str(1)
-            addr = speechtotext(10)
-            if addr != 'N':
-                texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
-                
-                i = i + str(1)
-                say = speechtotext(10)
-                print(say)
-                if say == 'yes' or say == 'Yes' or say=='yes yes':
-                    flag = False
-            else:
-                texttospeech("could not understand what you meant:", file + i)
-                i = i + str(1)
-            addr = addr.strip()
-            addr = addr.replace(' ', '')
-            addr = addr.lower()
-            addr = convert_special_char(addr)
-        flag = True
-        while (flag):
-            texttospeech("Enter your Password", file + i)
-            i = i + str(1)
-            passs = speechtotext(10)
-            if addr != 'N':
-                texttospeech("You meant " + passs + " say yes to confirm or no to enter again", file + i)
-                
-                i = i + str(1)
-                say = speechtotext(10)
-                print(say)
-                if say == 'yes' or say == 'Yes' or say=='yes yes':
-                    flag = False
-            else:
-                texttospeech("could not understand what you meant:", file + i)
-                i = i + str(1)
-            passs = passs.strip()
-            passs = passs.replace(' ', '')
-            passs = passs.lower()
-            passs = convert_special_char(passs)
-
-
+        email = introVoice('email',file,i)
+        passs = introVoice('password',file,i)
         # form = LoginForm(email=addr,password=passs,auth_code='1010101010')
         if True:
-            # email = addr
-            # password = passs
             auth_code = '1010101010'
-            user = authenticate(email=addr, password=passs)
+            user = authenticate(email=email, password=passs)
             print("************USER******=", user)
             print("valid")
             if user is not None and auth_code == user.auth_code:

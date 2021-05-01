@@ -45,6 +45,6 @@ class User(AbstractUser):
     auth_code = models.CharField(max_length=10, verbose_name='Authentication Code')
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['auth_code']
+    REQUIRED_FIELDS = []
 
     objects = UserManager()

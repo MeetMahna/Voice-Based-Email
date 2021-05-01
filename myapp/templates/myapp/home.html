@@ -83,6 +83,24 @@
 	</script>
 <!--===============================================================================================-->
 	<script src="{% static 'js/main.js' %}"></script>
+	<script>
+		function SendPostRequestHome(event){
+			$.ajax({
+			url: "{% url 'myapp:home' %}",
+			method: 'POST',
+			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
+			success: function (data) {
+			
+				if(data.result == 'success'){
+					window.location = "{% url 'myapp:home' %}";
+				}
+				else if(data.result == 'failure'){
+					window.location.reload();
+				}
+			}
+		});
+		}
+		</script>
 
 </body>
 </html>
