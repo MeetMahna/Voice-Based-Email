@@ -5,7 +5,6 @@ from django.contrib.auth import authenticate
 
 
 class SignUpForm(UserCreationForm):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({"placeholder": "Email"})
@@ -13,7 +12,6 @@ class SignUpForm(UserCreationForm):
         self.fields['password2'].widget.attrs.update({"placeholder": "Confirm Password"})
         self.fields['auth_code'].widget.attrs.update({"placeholder": "Authentication Code"})
         self.fields['gpass'].widget.attrs.update({"placeholder": "Gmail Password"})
-
 
     class Meta:
         model = User

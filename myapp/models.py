@@ -46,6 +46,6 @@ class User(AbstractUser):
     gpass = models.CharField(max_length=50, verbose_name='Gmail Password')
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['gpass']
 
+    REQUIRED_FIELDS = ['gpass']
     objects = UserManager()
