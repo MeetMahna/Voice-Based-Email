@@ -10,8 +10,11 @@ from playsound import playsound
 from django.http import JsonResponse
 
 def signup_view(request):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and request.user.is_active:
         return redirect("myapp:home")
+    if request.user.is_authenticated and not request.user.is_active:
+        return redirect("myapp:auth")
+
     if request.method == 'POST':
         print(request.POST)
         form = SignUpForm(request.POST)
@@ -31,12 +34,15 @@ def signup_view(request):
 
 def home_view(request):
     context = {}
-
     user = request.user
     if not user.is_authenticated:
         return redirect("myapp:first")
 
-    context['auth_code'] = user.auth_code
+    if not user.is_active:
+        return redirect("myapp:auth")
+
+    print("--------------",user.email)
+    # context['auth_code'] = user.auth_code
     context['email'] = user.email
     return render(request, 'myapp/home.html', context)
 
@@ -45,8 +51,11 @@ def first(request):
     context = {}
 
     user = request.user
-    if user.is_authenticated:
+    if user.is_authenticated and user.is_active:
         return redirect("myapp:home")
+
+    if user.is_authenticated and not user.is_active:
+        return redirect("myapp:auth")
 
     return render(request, 'myapp/first.html', context)
 
@@ -82,6 +91,7 @@ def speechtotext(duration):
     except:
         response = 'N'
     return response
+
 
 def convert_special_char(text):
     temp=text
@@ -150,14 +160,12 @@ def logout_view(request):
 
 def login_view(request):
     context = {}
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and request.user.is_active:
         return redirect("myapp:home")
-    
+    if request.user.is_authenticated and not request.user.is_active:
+        return redirect("myapp:auth")
 
-    
-
-    
-    
+    # post request
     if request.method == 'POST':
         text1 = "Welcome to our Voice Based Email Portal. Login with your email account to continue. "
         file = 'test'
@@ -167,7 +175,6 @@ def login_view(request):
 
         flag = True
         addr=''
-        passs=''
         while (flag):
             texttospeech("Enter your Email", file + i)
             i = i + str(1)
@@ -178,7 +185,7 @@ def login_view(request):
                 i = i + str(1)
                 say = speechtotext(10)
                 print(say)
-                if say == 'yes' or say == 'Yes' or say=='yes yes':
+                if say == 'yes' or say == 'Yes' or say=='yes yes' or say=='y' or say=='Y' or say=='why':
                     flag = False
             else:
                 texttospeech("could not understand what you meant:", file + i)
@@ -187,55 +194,85 @@ def login_view(request):
             addr = addr.replace(' ', '')
             addr = addr.lower()
             addr = convert_special_char(addr)
-        flag = True
-        while (flag):
-            texttospeech("Enter your Password", file + i)
-            i = i + str(1)
-            passs = speechtotext(10)
-            if addr != 'N':
-                texttospeech("You meant " + passs + " say yes to confirm or no to enter again", file + i)
-                
+
+        account = User.objects.filter(email=addr).first()
+        print("---------------->",account)
+
+        if account:
+            print("User Exists")
+
+            flag = True
+            passs = ''
+            while (flag):
+                texttospeech("Enter your password", file + i)
                 i = i + str(1)
-                say = speechtotext(10)
-                print(say)
-                if say == 'yes' or say == 'Yes' or say=='yes yes':
-                    flag = False
-            else:
-                texttospeech("could not understand what you meant:", file + i)
-                i = i + str(1)
+                passs = speechtotext(10)
+                if passs != 'N':
+                    texttospeech("You meant " + passs + " say yes to confirm or no to enter again", file + i)
+
+                    i = i + str(1)
+                    say = speechtotext(10)
+                    print(say)
+                    if say == 'yes' or say == 'Yes' or say == 'yes yes' or say=='y' or say=='Y' or say=='why':
+                        flag = False
+                else:
+                    texttospeech("could not understand what you meant:", file + i)
+                    i = i + str(1)
             passs = passs.strip()
             passs = passs.replace(' ', '')
             passs = passs.lower()
             passs = convert_special_char(passs)
 
-
-        # form = LoginForm(email=addr,password=passs,auth_code='1010101010')
-        if True:
-            # email = addr
-            # password = passs
-            auth_code = '1010101010'
+            # form = LoginForm(email=addr,password=passs,auth_code='1010101010')
+            # if account:
+            # auth_code = '1010101010'
             user = authenticate(email=addr, password=passs)
-            print("************USER******=", user)
-            print("valid")
-            if user is not None and auth_code == user.auth_code:
+            print("USER--------->>>", user)
+
+            if user is not None:
+                if not account.is_active:
+                    print("Your account is not active, create authentication code to continue")
+                    message = 'Account not active'
+                    texttospeech("Your account is not active, create authentication code to continue", file + i)
+                    i = i + str(1)
+                    login(request, user)
+                    return JsonResponse({'result': 'failure-active', 'message': message})
+
                 login(request, user)
-                # return render(request, 'myapp/home.html', {'addr':addr})
-                return JsonResponse({'result' : 'success'})
+                return JsonResponse({'result': 'success'})
             else:
-                # context['form'] = form
-                context['message'] = 'Incorrect Authentication Code!'
-                texttospeech("Please enter correct email and password !",file+i)
+                message = 'Incorrect Password!'
+                texttospeech("Please enter correct password !", file + i)
                 i = i + str(1)
-                return JsonResponse({'result' : 'failure'})
+                return JsonResponse({'result': 'failure', 'message': message})
         else:
-            print(addr)
-            print('tf')
-            context['message'] = 'Please enter correct email and password !'
-            # context['form'] = form
-            return JsonResponse({'result' : 'failure'})
+            print(addr,"does not exist!")
+            texttospeech("Please enter correct email address!",file+i)
+            i = i + str(1)
+            message = 'Please enter correct email address!'
+            return JsonResponse({'result': 'failure', 'message': message})
     else:
         context['form'] = LoginForm()
-        
 
     return render(request, 'myapp/login.html', context)
+
+
+def auth_view(request):
+    context = {}
+    user = request.user
+    if not user.is_authenticated:
+        return redirect("myapp:first")
+
+    if user.is_active:
+        # verify Auth Code
+        print("Account already active, enter auth code")
+
+    if not user.is_active:
+        # create Auth Code
+        print("Account not active, create auth code")
+
+    print("Email address----------->", user.email)
+
+    return render(request, 'myapp/login2.html', context)
+
 

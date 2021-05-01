@@ -29,66 +29,15 @@
 
 </head>
 <body>
-	<body onload = "SendPostRequestHome(event)">
-
+<!--	<body onload = "SendPostRequestHome(event)">-->
     <div class="limiter">
 		<div class="container-login100">
-			<div class="wrap-login100">
-				<div class="login100-pic js-tilt" data-tilt>
-					<img src="{% static '/images/img-01.png' %}" alt="IMG">
-				</div>
-                <form method="POST" class="login100-form validate-form">
-                    {% csrf_token %}
 					<span class="login100-form-title">
-						Login
+						<h1><font color="white">Authentication Code</font> </h1>
 					</span>
-
-                    {% for field in form %}
-					<div class="wrap-input100 validate-input">
-									<span class="focus-input100"></span>
-
-                                    {% render_field field class="input100" class="fa fa-envelope" aria-hidden="true"%}
-									<span class="focus-input100"></span>
-                                    {% if field.help_text %}
-                                    <small style="color: grey">{{ field.help_text }}</small>
-                                    {% endif %}
-
-                                    {% for error in field.errors %}
-                                    <p style="color: red">{{error}}</p>
-                                    {% endfor %}
-
-					</div>
-                    {% endfor %}
-					{% if message %}
-						<p style="color: red">{{message}}</p>
-					{% endif %}
-
-
-					<div class="container-login100-form-btn">
-						<button class="login100-form-btn">
-							Login
-						</button>
-					</div>
-					<div class="text-center p-t-12">
-						<span class="txt1">
-							Forgot
-						</span>
-						<a class="txt2" href="#">
-							Username / Password?
-						</a>
-					</div>
-					<div class="text-center">
-						<a class="txt2" href="{% url 'myapp:signup'%}">
-							Create your Account
-							<i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
-						</a>
-					</div>
-
-				</form>
-
-			</div>
 		</div>
 	</div>
+</body>
 
 
 
@@ -110,27 +59,4 @@
 <!--===============================================================================================-->
 	<script src="{% static 'js/main.js' %}"></script>
 
-
-	<script>
-		function SendPostRequestHome(event){
-			$.ajax({
-			url: "{% url 'myapp:login' %}",
-			method: 'POST',
-			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
-			success: function (data) {
-				if(data.result == 'success'){
-					window.location = "{% url 'myapp:auth' %}";
-				}
-
-				else if(data.result == 'failure-active'){
-					window.location = "{% url 'myapp:auth' %}";
-				}
-				else if(data.result == 'failure'){
-					window.location.reload();
-				}
-			}
-		});
-		}
-		</script>
-</body>
 </html>
