@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm, LoginForm
 from .models import User
 import speech_recognition as sr
+import time
 from gtts import gTTS
 import os
 from playsound import playsound
@@ -155,7 +156,7 @@ def speechtotext(duration):
 
 def convert_special_char(text):
     temp=text
-    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate']
+    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate','attherate']
     for character in special_chars:
         while(True):
             pos=temp.find(character)
@@ -182,6 +183,8 @@ def convert_special_char(text):
                     temp=temp.replace('dash','-')
                 elif character == 'at the rate':
                     temp=temp.replace('at the rate','@')
+                elif character == 'attherate':
+                    temp=temp.replace('attherate','@')
     return temp.strip()
 
 # def login_view(request):
@@ -268,13 +271,19 @@ def login_view(request):
             i = i + str(1)
             addr = speechtotext(10)
             if addr != 'N':
-                texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
+                texttospeech("You meant " + addr + " say yes to confirm or no to enter again or exit to terminate the program", file + i)
                 
                 i = i + str(1)
                 say = speechtotext(10)
                 print(say)
                 if say == 'yes' or say == 'Yes' or say=='yes yes' or say=='y' or say=='Y' or say=='why':
                     flag = False
+                elif say=='exit':
+                    flag = False
+                    time.sleep(60)
+                    texttospeech("The  application will restart in a minute",file+i)
+                    i=i + str(1)
+                    return JsonResponse({'result': 'failure', 'message': 'message'})
             else:
                 texttospeech("could not understand what you meant:", file + i)
                 i = i + str(1)
@@ -347,21 +356,29 @@ def login_view(request):
 
 
 def auth_view(request):
-    context = {}
-    user = request.user
-    if not user.is_authenticated:
-        return redirect("myapp:first")
+    if request.method=='GET':
+        context = {}
+        user = request.user
+        print('testng')
+        if not user.is_authenticated:
+            return redirect("myapp:first")
 
-    if user.is_active:
-        # verify Auth Code
-        print("Account already active, enter auth code")
+        if user.is_active:
+            # verify Auth Code
+            print("Account already active, enter auth code")
 
-    if not user.is_active:
-        # create Auth Code
-        print("Account not active, create auth code")
+        if not user.is_active:
+            # create Auth Code
+            print("Account not active, create auth code")
 
-    print("Email address----------->", user.email)
+        print("Email address----------->", user.email)
 
-    return render(request, 'myapp/login2.html', context)
+        return render(request, 'myapp/login2.html', context)
+    else:
+        print("We have reached here")
+        code = request.POST['authcode']
+        print(code)
+        
+        return render(request,'myapp/login2.html')
 
 

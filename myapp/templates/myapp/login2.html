@@ -1,6 +1,5 @@
 {% load static %}
 {% load widget_tweaks %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,23 +19,65 @@
 <!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="{% static 'vendor/select2/select2.min.css' %}">
 <!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'css/util.css' %}">
-	<link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+	<!--<link rel="stylesheet" type="text/css" href="{% static 'css/util.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">-->
 <!--===============================================================================================-->
 	<script src="{% static '/js/script.js' %}"></script>
-  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
 
 
 </head>
-<body>
-<!--	<body onload = "SendPostRequestHome(event)">-->
-    <div class="limiter">
-		<div class="container-login100">
-					<span class="login100-form-title">
-						<h1><font color="white">Authentication Code</font> </h1>
-					</span>
-		</div>
-	</div>
+<body style="background-color: aliceblues;" >
+	<button class="display-1" style="height: 700px; width:1500px;">
+		Click Here to check the mousebutton pressed
+	</button>
+	<form action="" method="POST">
+		{% csrf_token %}
+		<input hidden type="text" id="codeid" name="authcode" value="">
+	</form>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script>
+		 window.addEventListener('contextmenu', function (e) { 
+                                    // do something here... 
+                                    e.preventDefault(); 
+                                    }, false);
+                                    var x="",y="",count=0;
+                                    $('button').mousedown(function(event) 
+                                    {
+                                        switch (event.which) 
+                                        {
+                                            case 1:
+                                                    y="0";
+                                                    x=x+y;
+													console.log(x);
+													count++;
+													if(count==10)
+													{	console.log("Form submitted successfully!");
+														document.getElementById('codeid').value=x;
+														document.getElementsByTagName('form')[0].submit()
+													}
+                                                    break;
+                                            case 2:
+                                                break;
+                                            case 3: 
+                                                    y="1";
+                                                    x=x+y;
+													console.log(x);
+													count++;
+													if(count==10)
+													{	console.log("Form submitted successfully!");
+														document.getElementById('codeid').value=x;
+														document.getElementsByTagName('form')[0].submit()
+													}
+													break;
+                                            default:
+                                                break;
+                                        }
+                                        
+                                    });
+									
+	</script>
+				  
 </body>
 
 
