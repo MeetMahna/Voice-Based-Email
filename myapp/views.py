@@ -155,7 +155,7 @@ def speechtotext(duration):
 
 def convert_special_char(text):
     temp=text
-    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate']
+    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate','attherate']
     for character in special_chars:
         while(True):
             pos=temp.find(character)
@@ -182,6 +182,8 @@ def convert_special_char(text):
                     temp=temp.replace('dash','-')
                 elif character == 'at the rate':
                     temp=temp.replace('at the rate','@')
+                elif character == 'attherate':
+                    temp=temp.replace('attherate','@')
     return temp.strip()
 
 # def login_view(request):
