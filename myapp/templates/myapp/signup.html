@@ -104,9 +104,8 @@
 			method: 'POST',
 			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
 			success: function (data) {
-			
 				if(data.result == 'success'){
-					window.location = "{% url 'myapp:first' %}";
+					window.location = "{% url 'myapp:auth' %}";
 				}
 				else if(data.result == 'failure'){
 					window.location.reload();

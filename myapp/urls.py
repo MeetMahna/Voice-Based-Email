@@ -10,6 +10,7 @@ urlpatterns = [
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
     path('auth-code/', auth_view, name='auth'),
-    path('logout/', logout_view, name='logout')
+    path('logout/', logout_view, name='logout'),
+    
 
 ]

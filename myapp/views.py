@@ -10,7 +10,12 @@ import os
 from playsound import playsound
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+
+
+
+
 def signup_view(request):
+
     if request.user.is_authenticated and request.user.is_active:
         return redirect("myapp:home")
     if request.user.is_authenticated and not request.user.is_active:
@@ -20,9 +25,10 @@ def signup_view(request):
         print(request.POST)
         file = 'test'
         i = '1'
-        text1 = "Welcome to our Voice Based Email Portal. SignIn with your email account to continue. "
-        texttospeech(text1, file + i)
+
+        texttospeech("Welcome to our Voice Based Email Portal. SignIn with your email account to continue. ", file + i)
         i = i + str(1)
+
         email = introVoice('email',file,i)
         print(email)
         UserObj = User.objects.filter(email=email).first()
@@ -32,6 +38,7 @@ def signup_view(request):
             texttospeech("Already Exists, Try Again", file + i)
             i = i + str(1)
             return JsonResponse({'result' : 'failure'})
+
         passs = introVoice('password',file,i)
         # confirmPass = introVoice('password again',file,i)
         try:
@@ -39,26 +46,12 @@ def signup_view(request):
             print(obj)
         except:
             print("Some error")
-            texttospeech("There was some error, Please try again")
+            texttospeech("There was some error, Please try again",file+i)
             return JsonResponse({'result' : 'failure'})
-        # form = SignUpForm(email=email,password=passs,auth_code='1010101010')
-        # if True:
-        #     auth_code = '1010101010'
-        #     user = authenticate(email=email, password=passs)
-        #     print("************USER******=", user)
-        #     print("valid")
-        #     return JsonResponse({'result' : 'success'})
-        # else:
-        #     print(addr)
-        #     print('tf')
-        #     context['message'] = 'Please enter correct email and password !'
-        #     # context['form'] = form
-        #     return JsonResponse({'result' : 'failure'})
+       
         if True:
-            # email = form.cleaned_data.get('email')
-            # password = form.cleaned_data.get('password1')
+            
             user = authenticate(email=email, password=passs)
-            # login(request, user)
             return JsonResponse({'result' : 'success'})
         else:
             return JsonResponse({'result' : 'failure'})
@@ -80,8 +73,9 @@ def home_view(request):
     print("--------------",user.email)
     # context['auth_code'] = user.auth_code
 
-    context['email'] = user.email
-    return render(request, 'myapp/home.html', context)
+   # context['email'] = user.email
+    print(user.email)
+    return render(request, 'myapp/home.html', {'userobj':user})
 
 def ActionVoice():
     flag = True
@@ -187,37 +181,6 @@ def convert_special_char(text):
                     temp=temp.replace('attherate','@')
     return temp.strip()
 
-# def login_view(request):
-#     context = {}
-#     if request.user.is_authenticated:
-#         return redirect('/')
-#     if request.method == 'POST':
-#         print(request.POST)
-#         form = LoginForm(request.POST)
-#         if form.is_valid():
-#             email = form.cleaned_data.get('email')
-#             password = form.cleaned_data.get('password1')
-#             auth_code = form.cleaned_data.get('auth_code')
-#             user = authenticate(email=email, password=password)
-#             # print("valid")
-#             if user is not None and auth_code == user.auth_code:
-#                 login(request, user)
-#                 return redirect("myapp:home")
-#             else:
-#                 context['form'] = form
-#
-#         else:
-#             try:
-#                 acc = User.objects.get(email=request.POST['email'])
-#
-#             except User.DoesNotExist:
-#                 context['message'] = 'Please enter correct email and password !'
-#             context['form'] = form
-#     else:
-#         context['form'] = LoginForm()
-#     return render(request, 'myapp/login.html', context)
-
-
 def logout_view(request):
     logout(request)
     return redirect("myapp:first")
@@ -232,8 +195,8 @@ def introVoice(email,file,i):
         i = i + str(1)
         addr = speechtotext(10)
         if addr != 'N':
-            texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
-            
+            texttospeech("You meant " + addr + " say yes to confirm or no to enter again or exit to terminate the program", file + i)
+               
             i = i + str(1)
             say = speechtotext(10)
             print(say)
@@ -244,6 +207,13 @@ def introVoice(email,file,i):
                 addr = addr.lower()
                 addr = convert_special_char(addr)
                 return addr
+            elif say=='exit':
+                flag = False
+                time.sleep(60)
+                texttospeech("The  application will restart in a minute",file+i)
+                i=i + str(1)
+                return JsonResponse({'result': 'failure', 'message': 'message'})
+           
         else:
             texttospeech("could not understand what you meant:", file + i)
             i = i + str(1)
@@ -264,66 +234,18 @@ def login_view(request):
         texttospeech(text1, file + i)
         i = i + str(1)
 
-        flag = True
-        addr=''
-        while (flag):
-            texttospeech("Enter your Email", file + i)
-            i = i + str(1)
-            addr = speechtotext(10)
-            if addr != 'N':
-                texttospeech("You meant " + addr + " say yes to confirm or no to enter again or exit to terminate the program", file + i)
-                
-                i = i + str(1)
-                say = speechtotext(10)
-                print(say)
-                if say == 'yes' or say == 'Yes' or say=='yes yes' or say=='y' or say=='Y' or say=='why':
-                    flag = False
-                elif say=='exit':
-                    flag = False
-                    time.sleep(60)
-                    texttospeech("The  application will restart in a minute",file+i)
-                    i=i + str(1)
-                    return JsonResponse({'result': 'failure', 'message': 'message'})
-            else:
-                texttospeech("could not understand what you meant:", file + i)
-                i = i + str(1)
-            addr = addr.strip()
-            addr = addr.replace(' ', '')
-            addr = addr.lower()
-            addr = convert_special_char(addr)
+        emailId = introVoice('email',file,i)
 
-        account = User.objects.filter(email=addr).first()
+        account = User.objects.filter(email=emailId).first()
         print("---------------->",account)
 
         if account:
             print("User Exists")
-
-            flag = True
-            passs = ''
-            while (flag):
-                texttospeech("Enter your password", file + i)
-                i = i + str(1)
-                passs = speechtotext(10)
-                if passs != 'N':
-                    texttospeech("You meant " + passs + " say yes to confirm or no to enter again", file + i)
-
-                    i = i + str(1)
-                    say = speechtotext(10)
-                    print(say)
-                    if say == 'yes' or say == 'Yes' or say == 'yes yes' or say=='y' or say=='Y' or say=='why':
-                        flag = False
-                else:
-                    texttospeech("could not understand what you meant:", file + i)
-                    i = i + str(1)
-            passs = passs.strip()
-            passs = passs.replace(' ', '')
-            passs = passs.lower()
-            passs = convert_special_char(passs)
-
+            passs = introVoice("Password",file,i)
             # form = LoginForm(email=addr,password=passs,auth_code='1010101010')
             # if account:
             # auth_code = '1010101010'
-            user = authenticate(email=addr, password=passs)
+            user = authenticate(email=emailId, password=passs)
             print("USER--------->>>", user)
 
             if user is not None:
@@ -356,15 +278,19 @@ def login_view(request):
 
 
 def auth_view(request):
+    file = 'test'
+    i='1'
+    user = request.user
     if request.method=='GET':
         context = {}
-        user = request.user
         print('testng')
         if not user.is_authenticated:
             return redirect("myapp:first")
 
         if user.is_active:
             # verify Auth Code
+            texttospeech("Account already active, enter auth code", file + i)
+            i = i + str(1)
             print("Account already active, enter auth code")
 
         if not user.is_active:
@@ -378,7 +304,23 @@ def auth_view(request):
         print("We have reached here")
         code = request.POST['authcode']
         print(code)
-        
+        print(user.auth_code)
+        if user.auth_code:
+            if user.auth_code == code:
+                texttospeech("User authentication completed",file+i)
+                i = i + str(1)
+                return render(request,'myapp/home.html')
+            else:
+                texttospeech("Authentication failed , please try again!",file+i)
+                i = i + str(1)
+        else:
+            u = User.objects.filter(email=user.email).first()
+            u.auth_code = code
+            u.save( )
+            texttospeech("Authentication code created",file+i)
+            i = i + str(1)
+            return render(request,'myapp/home.html')
         return render(request,'myapp/login2.html')
+
 
 
