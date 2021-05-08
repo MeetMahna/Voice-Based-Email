@@ -4,14 +4,12 @@ import imaplib
 import email
 import os
 import traceback 
-# -------------------------------------------------
-#
-# Utility to read email from Gmail Using Python
-#
-# ------------------------------------------------
+
+
+
 ORG_EMAIL = "@gmail.com" 
-FROM_EMAIL = "nakulsharma8698" + ORG_EMAIL 
-FROM_PWD = "password" 
+FROM_EMAIL = "voicemail015" + ORG_EMAIL 
+FROM_PWD = "hesigoasbpvvtrkf" 
 SMTP_SERVER = "imap.gmail.com" 
 SMTP_PORT = 993
 
