@@ -26,7 +26,7 @@ def signup_view(request):
         file = 'test'
         i = '1'
 
-        texttospeech("Welcome to our Voice Based Email Portal. SignIn with your email account to continue. ", file + i)
+        texttospeech("Welcome to our Voice Based Email Portal. Signup with your Email account to continue. ", file + i)
         i = i + str(1)
 
         email = introVoice('email',file,i)
@@ -35,23 +35,28 @@ def signup_view(request):
         print(UserObj)
         # UserObj = get_object_or_404(User, email=email)
         if(UserObj):
-            texttospeech("Already Exists, Try Again", file + i)
+            texttospeech("Account Already Exists, Try Again", file + i)
             i = i + str(1)
             return JsonResponse({'result' : 'failure'})
 
+        name = introVoice('Name',file,i)
         passs = introVoice('password',file,i)
+        gpass = introVoice('G-Mail Password', file, i)
         # confirmPass = introVoice('password again',file,i)
         try:
-            obj = User.objects.create(email=email,password=passs)
+            obj = User.objects.create_user(email=email,password=passs,name=name,gpass=gpass)
+            obj.is_active = False
+            obj.save()
             print(obj)
         except:
             print("Some error")
             texttospeech("There was some error, Please try again",file+i)
             return JsonResponse({'result' : 'failure'})
-       
-        if True:
-            
-            user = authenticate(email=email, password=passs)
+
+        user = authenticate(email=email, password=passs)
+
+        if user:
+            login(request, user)
             return JsonResponse({'result' : 'success'})
         else:
             return JsonResponse({'result' : 'failure'})
@@ -63,6 +68,7 @@ def signup_view(request):
 def home_view(request):
     context = {}
     user = request.user
+
     if not user.is_authenticated:
         return redirect("myapp:first")
 
@@ -70,9 +76,51 @@ def home_view(request):
     if not user.is_active:
         return redirect("myapp:auth")
 
+    if request.method == 'POST':
+        flag = True
+        file = 'test'
+        i='0'
+        texttospeech("You are logged into your account. What would you like to do ?", file + i)
+        i = i + str(1)
+        while (flag):
+            texttospeech(
+                "To compose an email say 1."
+                "To open Inbox folder say 2. "
+                "To open Sent folder say 3. "
+                "To Logout say 9. "
+                "Say 0 to hear again.",
+                file + i)
+            i = i + str(1)
+            act = speechtotext(5)
+            act = act.lower()
+            if act == 'yes':
+                continue
+            elif act == '1' or act=='one':
+                return JsonResponse({'result': 'compose'})
+            elif act == '2' or act=='two':
+                return JsonResponse({'result': 'inbox'})
+            elif act == '3' or act=='three':
+                return JsonResponse({'result': 'sent'})
+            elif act == '9' or act=='nine':
+                texttospeech(
+                    "You have been logged out of your account and now will be redirected back to the login page.",
+                    file + i)
+                i = i + str(1)
+                return JsonResponse({'result': 'logout'})
+            elif act == '0' or act=='zero':
+                texttospeech("Repeating again", file + i)
+                i = i + str(1)
+                continue
+            else:
+                texttospeech("Invalid action. Please try again.", file + i)
+                i = i + str(1)
+                continue
+
+
+
     print("--------------",user.email)
     # context['auth_code'] = user.auth_code
-    MailList = ReadMails()
+    MailList = ReadMails(user.email, user.gpass)
    # context['email'] = user.email
     print("Printing in views")
     print(MailList)
@@ -134,13 +182,12 @@ def texttospeech(text, filename):
 
 def speechtotext(duration):
     global i, addr, passwrd
+    file = 'test'
+    i = '1'
     r = sr.Recognizer()
     with sr.Microphone() as source:
         r.adjust_for_ambient_noise(source, duration=1)
-        # texttospeech("speak", file + i)
-        # i = i + str(1)
-        # playsound('output.mp3')
-        print("Speak Now")
+        texttospeech('Speak', file + i)
         audio = r.listen(source, phrase_time_limit=duration)
     try:
         response = r.recognize_google(audio)
@@ -152,7 +199,7 @@ def speechtotext(duration):
 
 def convert_special_char(text):
     temp=text
-    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate','attherate']
+    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate','attherate', 'zero']
     for character in special_chars:
         while(True):
             pos=temp.find(character)
@@ -163,6 +210,8 @@ def convert_special_char(text):
                     temp=temp.replace('dot','.')
                 elif character == 'underscore':
                     temp=temp.replace('underscore','_')
+                elif character == 'zero':
+                    temp = temp.replace('zero', '0')
                 elif character == 'dollar':
                     temp=temp.replace('dollar','$')
                 elif character == 'hash':
@@ -197,7 +246,7 @@ def introVoice(email,file,i):
         i = i + str(1)
         addr = speechtotext(10)
         if addr != 'N':
-            texttospeech("You meant " + addr + " say yes to confirm or no to enter again or exit to terminate the program", file + i)
+            texttospeech("You meant " + addr + " say yes to confirm or  no to enter again or   exit to terminate the program", file + i)
                
             i = i + str(1)
             say = speechtotext(10)
@@ -212,7 +261,7 @@ def introVoice(email,file,i):
             elif say=='exit':
                 flag = False
                 time.sleep(60)
-                texttospeech("The  application will restart in a minute",file+i)
+                texttospeech("The application will restart in a minute",file+i)
                 i=i + str(1)
                 return JsonResponse({'result': 'failure', 'message': 'message'})
            
@@ -291,12 +340,14 @@ def auth_view(request):
 
         if user.is_active:
             # verify Auth Code
-            texttospeech("Account already active, enter auth code", file + i)
+            texttospeech("Account already active, enter 10 digit authentication code using mouse clicks", file + i)
             i = i + str(1)
-            print("Account already active, enter auth code")
+            print("Account already active, enter authentication code using mouse clicks")
 
         if not user.is_active:
             # create Auth Code
+            texttospeech("Enter 10 digit authentication code using mouse clicks to continue", file + i)
+            i = i + str(1)
             print("Account not active, create auth code")
 
         print("Email address----------->", user.email)
@@ -311,18 +362,29 @@ def auth_view(request):
             if user.auth_code == code:
                 texttospeech("User authentication completed",file+i)
                 i = i + str(1)
-                return render(request,'myapp/home.html')
+                return redirect('myapp:home')
             else:
                 texttospeech("Authentication failed , please try again!",file+i)
                 i = i + str(1)
         else:
             u = User.objects.filter(email=user.email).first()
             u.auth_code = code
-            u.save( )
-            texttospeech("Authentication code created",file+i)
+            u.is_active = True
+            u.save()
+            texttospeech("Account successfully created",file+i)
             i = i + str(1)
-            return render(request,'myapp/home.html')
+            return redirect('myapp:home')
         return render(request,'myapp/login2.html')
 
 
+def compose_view(request):
+    print("Reached Compose View")
+    return render(request, 'myapp/compose.html')
 
+def inbox_view(request):
+    print("Reached Inbox View")
+    return render(request, 'myapp/compose.html')
+
+def sent_view(request):
+    print("Reached Sent View")
+    return render(request, 'myapp/compose.html')
