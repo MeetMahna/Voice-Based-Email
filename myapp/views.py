@@ -10,7 +10,7 @@ import os
 from playsound import playsound
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-
+from myapp.EmailFunction import *
 
 
 
@@ -72,10 +72,12 @@ def home_view(request):
 
     print("--------------",user.email)
     # context['auth_code'] = user.auth_code
-
+    MailList = ReadMails()
    # context['email'] = user.email
-    print(user.email)
-    return render(request, 'myapp/home.html', {'userobj':user})
+    print("Printing in views")
+    print(MailList)
+
+    return render(request, 'myapp/home.html', {'userobj':user, 'MailList':MailList})
 
 def ActionVoice():
     flag = True
