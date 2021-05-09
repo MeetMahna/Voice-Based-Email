@@ -19,7 +19,7 @@ def read_email_from_gmail():
     try:
         mail = imaplib.IMAP4_SSL(SMTP_SERVER)
         mail.login(FROM_EMAIL,FROM_PWD)
-        mail.select('inbox') #'"[Gmail]/Sent Mail"'
+        mail.select('"[Gmail]/Sent Mail"') #''
 
         data = mail.search(None, 'ALL')
         mail_ids = data[1]
@@ -42,6 +42,7 @@ def read_email_from_gmail():
                     content_type = msg.get_content_type()
 
                     body = msg.get_payload()
+                    print(body)
 
                     if msg.is_multipart():
                 # iterate over email parts
@@ -78,7 +79,8 @@ def read_email_from_gmail():
                     data = data.replace("-","+").replace("_","/")
                     decoded_data = base64.b64decode(data)"""
                     print('From : ' + email_from + '\n')
-                    #print('To : ' + email_to + '\n')
+                    if(email_to):
+                        print('To : ' + email_to + '\n')
                     if(email_subject):
                         print('Subject : ' + email_subject + '\n')
                     print(content_type+ '\n')
