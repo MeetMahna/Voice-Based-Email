@@ -4,12 +4,13 @@ import imaplib
 import email
 import os
 import traceback 
-from myapp.DecodeMail import Mail 
+from myapp.DecodeMail import Mail
+from .models import User
 
-
-ORG_EMAIL = "@gmail.com" 
-FROM_EMAIL = "voicemail015" + ORG_EMAIL 
-FROM_PWD = "hesigoasbpvvtrkf" 
+#
+# ORG_EMAIL = "@gmail.com"
+# FROM_EMAIL = "voicemail015" + ORG_EMAIL
+# FROM_PWD = "hesigoasbpvvtrkf"
 SMTP_SERVER = "imap.gmail.com" 
 SMTP_PORT = 993
 ALL = "ALL"
@@ -19,10 +20,10 @@ INBOX = 'INBOX'
 SPAM = 'SPAM'
 SENT = '"[Gmail]/Sent Mail"'
 STARRED = 'STARRED'
-def ReadMails():
+def ReadMails(id, gpass):
     try:
         mail = imaplib.IMAP4_SSL(SMTP_SERVER)
-        mail.login(FROM_EMAIL,FROM_PWD)
+        mail.login(id, gpass)
         mail.select(INBOX)
 
         data = mail.search(None, ALL)
@@ -66,5 +67,3 @@ def ReadMails():
     except Exception as e:
         traceback.print_exc() 
         print(str(e))
-
-ReadMails()

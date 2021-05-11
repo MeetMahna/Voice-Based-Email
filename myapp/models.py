@@ -41,11 +41,12 @@ class User(AbstractUser):
     """User model."""
 
     username = None
+    name = models.CharField(max_length=50, verbose_name='Name')
     email = models.EmailField(_('email address'), unique=True)
     auth_code = models.CharField(max_length=10, verbose_name='Authentication Code')
     gpass = models.CharField(max_length=50, verbose_name='Gmail Password')
 
     USERNAME_FIELD = 'email'
 
-    REQUIRED_FIELDS = ['gpass']
+    REQUIRED_FIELDS = ['gpass', 'name']
     objects = UserManager()

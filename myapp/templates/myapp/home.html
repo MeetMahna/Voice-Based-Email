@@ -23,7 +23,7 @@
 	</style>
 </head>
 
-<body>
+<body onload = "SendPostRequestHome(event)">
 
 	<div class="contain">
 		<div class="row">
@@ -82,5 +82,50 @@
 		crossorigin="anonymous"></script>
 
 </body>
+
+<!--===============================================================================================-->
+	<script src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+<!--===============================================================================================-->
+	<script src="{% static 'vendor/bootstrap/js/popper.js' %}"></script>
+	<script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+<!--===============================================================================================-->
+	<script src="{% static 'vendor/select2/select2.min.js' %}"></script>
+<!--===============================================================================================-->
+	<script src="{% static 'vendor/tilt/tilt.jquery.min.js' %}"></script>
+	<script >
+		$('.js-tilt').tilt({
+			scale: 1.1
+		})
+	</script>
+<!--===============================================================================================-->
+
+	<script src="{% static 'js/main.js' %}"></script>
+
+	<script>
+		function SendPostRequestHome(event){
+			$.ajax({
+			url: "{% url 'myapp:home' %}",
+			method: 'POST',
+			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
+			success: function (data) {
+				if(data.result == 'compose'){
+					window.location = "{% url 'myapp:compose' %}";
+				}
+
+				else if(data.result == 'logout'){
+					window.location = "{% url 'myapp:logout' %}";
+				}
+				else if(data.result == 'inbox'){
+					window.location = "{% url 'myapp:inbox' %}";
+				}
+
+				else if(data.result == 'sent'){
+					window.location = "{% url 'myapp:sent' %}";
+
+				}
+			}
+		});
+		}
+		</script>
 
 </html>
