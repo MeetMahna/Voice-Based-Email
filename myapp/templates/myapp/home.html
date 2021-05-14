@@ -123,6 +123,10 @@
 					window.location = "{% url 'myapp:sent' %}";
 
 				}
+				else if(data.result == 'read'){
+					window.location = "{% url 'myapp:read' %}";
+
+				}
 			}
 		});
 		}
