@@ -87,6 +87,7 @@ def home_view(request):
                 "To compose an email say 1."
                 "To open Inbox folder say 2. "
                 "To open Sent folder say 3. "
+                "To Read mails say 4. "
                 "To Logout say 9. "
                 "Say 0 to hear again.",
                 file + i)
@@ -101,6 +102,8 @@ def home_view(request):
                 return JsonResponse({'result': 'inbox'})
             elif act == '3' or act=='three':
                 return JsonResponse({'result': 'sent'})
+            elif act == '4' or act=='four' or act=='fore' or act=='for':
+                return JsonResponse({'result': 'read'})
             elif act == '9' or act=='nine':
                 texttospeech(
                     "You have been logged out of your account and now will be redirected back to the login page.",
@@ -246,7 +249,7 @@ def introVoice(email,file,i):
         i = i + str(1)
         addr = speechtotext(10)
         if addr != 'N':
-            texttospeech("You meant " + addr + " say yes to confirm or  no to enter again or   exit to terminate the program", file + i)
+            texttospeech("You meant " + addr + " say yes to confirm or  no to enter again or exit to terminate the program", file + i)
                
             i = i + str(1)
             say = speechtotext(10)
@@ -388,3 +391,34 @@ def inbox_view(request):
 def sent_view(request):
     print("Reached Sent View")
     return render(request, 'myapp/compose.html')
+
+# def read_view(request,mail):
+#     print("Reached read View")
+#     UserObj = User.objects.filter(email=email).first()
+#     MailList = ReadMails(user.email, user.gpass)
+#     return render(request, 'myapp/read.html')
+
+def read_view(request):
+    if request.method == 'GET':
+        user = request.user
+        MailList = ReadMails(user.email, user.gpass)
+        print("Reached read View")
+        i = '1'
+        file = "test"
+        # for mail in mails:
+        for j in range(0,len(MailList)):
+            k = MailList[j]
+            texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is "+k.subject+". Do you want to read it? say yes to read or no to continue."  ,file+i)
+            i = i + str(1)
+            say = speechtotext(10)
+            print(say)
+            if say=='yes' or say=="Yes" or say=="Yes Yes":
+                return render(request,'myapp/read.html',{'mail':k})
+            else:
+                continue
+        return redirect('myapp/home.html')
+
+    else:
+        print("hjcbcnmcbm")
+        print(request)
+

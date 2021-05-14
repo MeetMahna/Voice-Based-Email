@@ -1,3 +1,5 @@
+{% load static %}
+{% load widget_tweaks %}
 <!DOCTYPE html>
     <head>
         <!-- Required meta tags -->
@@ -54,7 +56,7 @@
                 }
         </style>
     </head>
-    <body>
+    <body onload = "SendPostRequestHome(event)">
         <div class="contain">
             <div class="row">
                 <div class="sidebar col-2">
@@ -103,15 +105,15 @@
                                 <div class="card-header">
                                     <div class="row">
                                         <div class="col -6">
-                                            <h6>From : Sender's Email</h6>
+                                            <h6>From : {{mail.email}}</h6>
                                         </div>
                                         <div class="col-3">
-                                            <h6>Date : 10-05-2021</h6>
+                                            <h6>Date : {{mail.date}}</h6>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-header">
-                                    <h6>Subject</h6>
+                                    <h6>Subject: {{mail.subject}}</h6>
                                 </div>
                                 <div class="card-body" style="padding: 30px;">
                                     <p>
@@ -138,4 +140,35 @@
             </div>
         </div>
     </body>
+    <script>
+		function SendPostRequestHome(event){
+			$.ajax({
+			url: "{% url 'myapp:home' %}",
+			method: 'POST',
+			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
+			success: function (data) {
+				if(data.result == 'compose'){
+					window.location = "{% url 'myapp:compose' %}";
+				}
+
+				else if(data.result == 'logout'){
+					window.location = "{% url 'myapp:logout' %}";
+				}
+				else if(data.result == 'inbox'){
+					window.location = "{% url 'myapp:inbox' %}";
+				}
+
+				else if(data.result == 'sent'){
+					window.location = "{% url 'myapp:sent' %}";
+
+				}
+				else if(data.result == 'read'){
+					window.location = "{% url 'myapp:read' %}";
+
+				}
+			}
+		});
+		}
+		</script>
+
 </html>
