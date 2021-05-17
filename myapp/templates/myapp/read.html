@@ -139,36 +139,28 @@
     
             </div>
         </div>
+    
     </body>
+    
     <script>
 		function SendPostRequestHome(event){
 			$.ajax({
-			url: "{% url 'myapp:home' %}",
+			url: "{% url 'myapp:read' %}",
 			method: 'POST',
 			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
 			success: function (data) {
-				if(data.result == 'compose'){
-					window.location = "{% url 'myapp:compose' %}";
+				if(data.result == 'success'){
+					window.location = "{% url 'myapp:login' %}";
 				}
 
-				else if(data.result == 'logout'){
-					window.location = "{% url 'myapp:logout' %}";
+				else if(data.result == 'failure-active'){
+					window.location = "{% url 'myapp:auth' %}";
 				}
-				else if(data.result == 'inbox'){
-					window.location = "{% url 'myapp:inbox' %}";
-				}
-
-				else if(data.result == 'sent'){
-					window.location = "{% url 'myapp:sent' %}";
-
-				}
-				else if(data.result == 'read'){
-					window.location = "{% url 'myapp:read' %}";
-
+				else if(data.result == 'failure'){
+					window.location.reload();
 				}
 			}
 		});
 		}
 		</script>
-
 </html>

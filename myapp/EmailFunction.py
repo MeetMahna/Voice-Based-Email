@@ -6,6 +6,8 @@ import os
 import traceback 
 from myapp.DecodeMail import Mail
 from .models import User
+from email.message import EmailMessage
+
 
 #
 # ORG_EMAIL = "@gmail.com"
@@ -67,3 +69,18 @@ def ReadMails(id, gpass):
     except Exception as e:
         traceback.print_exc() 
         print(str(e))
+
+
+def sendMail(userid,gpass,receiverMail,sub,message):
+    msg = EmailMessage()
+    msg.set_content(message)
+
+    msg['Subject'] = sub
+    msg['From'] = userid
+    msg['To'] = receiverMail
+
+    # Send the message via our own SMTP server.
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.login(userid, gpass)
+    server.send_message(msg)
+    server.quit()
