@@ -381,8 +381,88 @@ def auth_view(request):
 
 
 def compose_view(request):
-    print("Reached Compose View")
+    file = 'test'
+    i='1'
+    user = request.user
+    if request.method=='POST':
+        print("hit post request in compose view")
+        #entering sender's email address
+        recievers_addr = introVoice('Senders Address',file,i)
+        print("recievers_addr-->")
+        print(recievers_addr)
+        subject = introVoice('Subject',file,i)
+        print("subject-->")
+        print(subject)
+        #entering content
+        msg = composeMessage(file,i)
+        print("msg---->")
+        print(msg)
+        read = composeVoice("Do you want to read it. Say yes to read or no to proceed further", file,i)
+        print(read)
+        if read == "yes":
+            texttospeech(msg,file+i)
+            i=i+str(1)
+        composeAction = composeVoice("Say delete to discard the draft or rewrite to compose again or send to send the draft",file,i)
+        print(composeAction)
+        if composeAction == 'delete':
+            print("deleting")
+            msg = ""
+            texttospeech("Draft has been deleted and you have been redirected to home page",file+i)
+            i = i+str(1)
+            return JsonResponse({'result': 'success'})
+        elif composeAction == 'rewrite':
+            print("rewriting")
+            return JsonResponse({'result': 'rewrite'})
+        elif composeAction == 'send':
+            u = User.objects.filter(email=user.email).first()
+            sendMail(u.email,u.gpass,recievers_addr,subject,msg)
+            print("mail sent")
+            texttospeech("Mail sent successfully. You are now redirected to home page",file+i)
+            i=i+str(1)
+            return JsonResponse({'result': 'success'})
+    print("hit get request in compose view")
     return render(request, 'myapp/compose.html')
+
+def composeMessage(file,i):
+    flag =True
+    msg =''
+    while (flag):
+        
+        sentence = composeVoice("Enter the sentence", file,i)
+        say = composeVoice("Say continue to keep writing further or finish if you are done ",file,i)
+        print(say)
+        if say == 'continue' or say == 'Continue':
+            msg = msg+sentence
+            sentence = ""
+        elif say=='finish':
+            flag = False
+            msg = msg+sentence
+            return msg
+
+def composeVoice(msg,file,i):
+    flag = True
+    addr=''
+    passs=''
+    while (flag):
+        texttospeech(msg, file + i)
+        i = i + str(1)
+        addr = speechtotext(10)
+        if addr != 'N':
+            texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
+            i = i + str(1)
+            say = speechtotext(10)
+            print(say)
+            if say == 'yes' or say == 'Yes' or say=='yes yes':
+                flag = False
+                addr = addr.strip()
+                #addr=addr.replace(' ','')
+                addr = addr.lower()
+                addr = convert_special_char(addr)
+                return addr
+             
+        else:
+            texttospeech("could not understand what you meant:", file + i)
+            i = i + str(1)
 
 def inbox_view(request):
     print("Reached Inbox View")
@@ -399,7 +479,7 @@ def sent_view(request):
 #     return render(request, 'myapp/read.html')
 
 def read_view(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         user = request.user
         MailList = ReadMails(user.email, user.gpass)
         print("Reached read View")
@@ -416,9 +496,10 @@ def read_view(request):
                 return render(request,'myapp/read.html',{'mail':k})
             else:
                 continue
-        return redirect('myapp/home.html')
+        return redirect('myapp/read.html')
 
     else:
         print("hjcbcnmcbm")
         print(request)
+        return render(request,'read.html')
 
