@@ -1,3 +1,5 @@
+from json import decoder, encoder
+from django.http.request import HttpHeaders, HttpRequest
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 # from django.contrib.auth.forms import UserCreationForm
@@ -68,7 +70,9 @@ def signup_view(request):
 def home_view(request):
     context = {}
     user = request.user
-
+    print("--------------",user.email)
+    MailList = ReadMails(user.email, user.gpass)
+    print("Printing in views")
     if not user.is_authenticated:
         return redirect("myapp:first")
 
@@ -80,15 +84,16 @@ def home_view(request):
         flag = True
         file = 'test'
         i='0'
+        
         texttospeech("You are logged into your account. What would you like to do ?", file + i)
         i = i + str(1)
         while (flag):
             texttospeech(
-                "To compose an email say 1."
-                "To open Inbox folder say 2. "
-                "To open Sent folder say 3. "
-                "To Read mails say 4. "
-                "To Logout say 9. "
+                # "To compose an email say 1."
+                # "To open Inbox folder say 2. "
+                # "To open Sent folder say 3. "
+                # "To Read mails say 4. "
+                # "To Logout say 9. "
                 "Say 0 to hear again.",
                 file + i)
             i = i + str(1)
@@ -103,7 +108,11 @@ def home_view(request):
             elif act == '3' or act=='three':
                 return JsonResponse({'result': 'sent'})
             elif act == '4' or act=='four' or act=='fore' or act=='for':
-                return JsonResponse({'result': 'read'})
+                ans = Read(MailList,file,i)
+                print(ans)
+                if ans >= 0:
+                    print("reached on line 114")
+                    return JsonResponse({'result': 'read' , 'id':ans})
             elif act == '9' or act=='nine':
                 texttospeech(
                     "You have been logged out of your account and now will be redirected back to the login page.",
@@ -119,16 +128,22 @@ def home_view(request):
                 i = i + str(1)
                 continue
 
-
-
-    print("--------------",user.email)
-    # context['auth_code'] = user.auth_code
-    MailList = ReadMails(user.email, user.gpass)
-   # context['email'] = user.email
-    print("Printing in views")
-    print(MailList)
-
     return render(request, 'myapp/home.html', {'userobj':user, 'MailList':MailList})
+
+
+def Read(MailList,file,i):
+    for j in range(0,len(MailList)):
+        k = MailList[j]
+        texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is "+k.subject+". Do you want to read it? say yes to read or no to continue."  ,file+i)
+        i = i + str(1)
+        say = speechtotext(10)
+        print(say)
+        if say=='yes' or say=="Yes" or say=="Yes Yes":
+            return j
+        else:
+            continue
+    return -1
+
 
 def ActionVoice():
     flag = True
@@ -381,88 +396,8 @@ def auth_view(request):
 
 
 def compose_view(request):
-    file = 'test'
-    i='1'
-    user = request.user
-    if request.method=='POST':
-        print("hit post request in compose view")
-        #entering sender's email address
-        recievers_addr = introVoice('Senders Address',file,i)
-        print("recievers_addr-->")
-        print(recievers_addr)
-        subject = introVoice('Subject',file,i)
-        print("subject-->")
-        print(subject)
-        #entering content
-        msg = composeMessage(file,i)
-        print("msg---->")
-        print(msg)
-        read = composeVoice("Do you want to read it. Say yes to read or no to proceed further", file,i)
-        print(read)
-        if read == "yes":
-            texttospeech(msg,file+i)
-            i=i+str(1)
-        composeAction = composeVoice("Say delete to discard the draft or rewrite to compose again or send to send the draft",file,i)
-        print(composeAction)
-        if composeAction == 'delete':
-            print("deleting")
-            msg = ""
-            texttospeech("Draft has been deleted and you have been redirected to home page",file+i)
-            i = i+str(1)
-            return JsonResponse({'result': 'success'})
-        elif composeAction == 'rewrite':
-            print("rewriting")
-            return JsonResponse({'result': 'rewrite'})
-        elif composeAction == 'send':
-            u = User.objects.filter(email=user.email).first()
-            sendMail(u.email,u.gpass,recievers_addr,subject,msg)
-            print("mail sent")
-            texttospeech("Mail sent successfully. You are now redirected to home page",file+i)
-            i=i+str(1)
-            return JsonResponse({'result': 'success'})
-    print("hit get request in compose view")
+    print("Reached Compose View")
     return render(request, 'myapp/compose.html')
-
-def composeMessage(file,i):
-    flag =True
-    msg =''
-    while (flag):
-        
-        sentence = composeVoice("Enter the sentence", file,i)
-        say = composeVoice("Say continue to keep writing further or finish if you are done ",file,i)
-        print(say)
-        if say == 'continue' or say == 'Continue':
-            msg = msg+sentence
-            sentence = ""
-        elif say=='finish':
-            flag = False
-            msg = msg+sentence
-            return msg
-
-def composeVoice(msg,file,i):
-    flag = True
-    addr=''
-    passs=''
-    while (flag):
-        texttospeech(msg, file + i)
-        i = i + str(1)
-        addr = speechtotext(10)
-        if addr != 'N':
-            texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
-            i = i + str(1)
-            say = speechtotext(10)
-            print(say)
-            if say == 'yes' or say == 'Yes' or say=='yes yes':
-                flag = False
-                addr = addr.strip()
-                #addr=addr.replace(' ','')
-                addr = addr.lower()
-                addr = convert_special_char(addr)
-                return addr
-             
-        else:
-            texttospeech("could not understand what you meant:", file + i)
-            i = i + str(1)
 
 def inbox_view(request):
     print("Reached Inbox View")
@@ -478,28 +413,31 @@ def sent_view(request):
 #     MailList = ReadMails(user.email, user.gpass)
 #     return render(request, 'myapp/read.html')
 
-def read_view(request):
-    if request.method == 'POST':
+def read_view(request,id):
+    if request.method == 'GET':
+        # print(request.GET.get('id'))
+        # id = request.GET.get('id')
+        id = int(id)
         user = request.user
         MailList = ReadMails(user.email, user.gpass)
+        mail = MailList[id]
         print("Reached read View")
         i = '1'
         file = "test"
         # for mail in mails:
-        for j in range(0,len(MailList)):
-            k = MailList[j]
-            texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is "+k.subject+". Do you want to read it? say yes to read or no to continue."  ,file+i)
-            i = i + str(1)
-            say = speechtotext(10)
-            print(say)
-            if say=='yes' or say=="Yes" or say=="Yes Yes":
-                return render(request,'myapp/read.html',{'mail':k})
-            else:
-                continue
-        return redirect('myapp/read.html')
+        # for j in range(0,len(MailList)):
+        #     k = MailList[j]
+        #     texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is "+k.subject+". Do you want to read it? say yes to read or no to continue."  ,file+i)
+        #     i = i + str(1)
+        #     say = speechtotext(10)
+        #     print(say)
+        #     if say=='yes' or say=="Yes" or say=="Yes Yes":
+        #         return render(request,'myapp/read.html',{'mail':k})
+        #     else:
+        #         continue
+        return render(request,'myapp/read.html',{'mail':mail})
 
     else:
         print("hjcbcnmcbm")
         print(request)
-        return render(request,'read.html')
-
+        return JsonResponse({'result': 'success'})

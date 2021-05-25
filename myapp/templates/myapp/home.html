@@ -124,7 +124,12 @@
 
 				}
 				else if(data.result == 'read'){
-					window.location = "{% url 'myapp:read' %}";
+					console.log(data.id);
+					x = '0';
+					var patch = '{% url "myapp:read" id=0 %}'.replace('0', data.id);
+					// var urrl = " url 'myapp:read' id=q".replace('q',data.id);
+					// console.log(urrl);
+					window.location = "{% url 'myapp:read' id=0%}";
 
 				}
 			}
@@ -133,3 +138,5 @@
 		</script>
 
 </html>
+
+PhotoDelete(n){ var patch = '{% url "myapp:read" id=0 %}'.replace('0', data.id); $.ajax({ type: 'post', url: patch, datatype:'json', success: function(data)
