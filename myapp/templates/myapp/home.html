@@ -31,7 +31,7 @@
 				<header>{{userobj.email}}</header>
 				<ul>
 					<li>
-						<a href="#"><button class="compose"><i class="fas fa-pencil-alt"></i>Compose Mail</button></a>
+						<a href="compose.html"><button class="compose"><i class="fas fa-pencil-alt"></i>Compose Mail</button></a>
 					</li>
 					<li>
 						<a href="#"><i class="fas fa-inbox"></i>Inbox</a>
@@ -123,9 +123,20 @@
 					window.location = "{% url 'myapp:sent' %}";
 
 				}
+				else if(data.result == 'read'){
+					console.log(data.id);
+					x = '0';
+					var patch = '{% url "myapp:read" id=0 %}'.replace('0', data.id);
+					// var urrl = " url 'myapp:read' id=q".replace('q',data.id);
+					// console.log(urrl);
+					window.location = "{% url 'myapp:read' id=0%}";
+
+				}
 			}
 		});
 		}
 		</script>
 
 </html>
+
+PhotoDelete(n){ var patch = '{% url "myapp:read" id=0 %}'.replace('0', data.id); $.ajax({ type: 'post', url: patch, datatype:'json', success: function(data)
