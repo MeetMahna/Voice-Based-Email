@@ -1,3 +1,4 @@
+from django.conf.urls import url
 from django.urls import path
 from .views import home_view, signup_view, login_view, logout_view, first, auth_view, compose_view, inbox_view, read_view, sent_view
 
@@ -14,7 +15,8 @@ urlpatterns = [
     path('compose/', compose_view, name='compose'),
     path('inbox/', inbox_view, name='inbox'),
     path('sent/', sent_view, name='sent'),
-    path('read/',read_view, name='read'),
+    # url(r'read/(?P<id>[0-9]+)$',read_view, name='read'),
+    path('read/<id>',read_view, name='read'),
 
 
 ]

@@ -119,10 +119,7 @@
                                     <p>
                                         Mail Body
                                     <br>
-                                    Lorem ipsum dolor sit amet consectetur adipisicing elit.<br>
-                                    Labore voluptas provident repellendus corrupti placeat.<br>
-                                    Officiis ipsa atque, culpa neque rem incidunt mollitia<br>
-                                    iste ad quis quidem molestias, doloremque nesciunt praesentium?
+                                    {{mail.body}}
                                     </p>
                                 </div>
                                 <div class="card-footer" style="padding: auto;">
@@ -141,24 +138,19 @@
         </div>
     
     </body>
-    
-    <script>
+    <!-- <script src="{% static 'js/main.js' %}"></script> -->
+	<script>
 		function SendPostRequestHome(event){
 			$.ajax({
-			url: "{% url 'myapp:read' %}",
+			url: "{% url 'myapp:read' id=0%}",
 			method: 'POST',
 			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
 			success: function (data) {
+                console.log("POST READ REACHED");
 				if(data.result == 'success'){
-					window.location = "{% url 'myapp:login' %}";
+					window.location = "{% url 'myapp:compose' %}";
 				}
 
-				else if(data.result == 'failure-active'){
-					window.location = "{% url 'myapp:auth' %}";
-				}
-				else if(data.result == 'failure'){
-					window.location.reload();
-				}
 			}
 		});
 		}
