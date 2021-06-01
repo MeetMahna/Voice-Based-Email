@@ -125,15 +125,11 @@
 				}
 				else if(data.result == 'read'){
 					console.log(data.id);
-					x = '0';
-					var patch = '{% url "myapp:read" id=0 %}'.replace('0', data.id);
-					// var urrl = " url 'myapp:read' id=q".replace('q',data.id);
-					// console.log(urrl);
-					window.location = "{% url 'myapp:read' id=0%}";
+					window.location = '/read/'+data.id ;
 
 				}
 			}
-		});
+		});1
 		}
 		</script>
 

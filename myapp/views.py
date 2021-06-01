@@ -15,7 +15,6 @@ from django.shortcuts import get_object_or_404
 from myapp.EmailFunction import *
 
 
-
 def signup_view(request):
 
     if request.user.is_authenticated and request.user.is_active:
@@ -28,10 +27,11 @@ def signup_view(request):
         file = 'test'
         i = '1'
 
-        texttospeech("Welcome to our Voice Based Email Portal. Signup with your Email account to continue. ", file + i)
+        texttospeech(
+            "Welcome to our Voice Based Email Portal. Signup with your Email account to continue. ", file + i)
         i = i + str(1)
 
-        email = introVoice('email',file,i)
+        email = introVoice('email', file, i)
         print(email)
         UserObj = User.objects.filter(email=email).first()
         print(UserObj)
@@ -39,29 +39,30 @@ def signup_view(request):
         if(UserObj):
             texttospeech("Account Already Exists, Try Again", file + i)
             i = i + str(1)
-            return JsonResponse({'result' : 'failure'})
+            return JsonResponse({'result': 'failure'})
 
-        name = introVoice('Name',file,i)
-        passs = introVoice('password',file,i)
+        name = introVoice('Name', file, i)
+        passs = introVoice('password', file, i)
         gpass = introVoice('G-Mail Password', file, i)
         # confirmPass = introVoice('password again',file,i)
         try:
-            obj = User.objects.create_user(email=email,password=passs,name=name,gpass=gpass)
+            obj = User.objects.create_user(
+                email=email, password=passs, name=name, gpass=gpass)
             obj.is_active = False
             obj.save()
             print(obj)
         except:
             print("Some error")
-            texttospeech("There was some error, Please try again",file+i)
-            return JsonResponse({'result' : 'failure'})
+            texttospeech("There was some error, Please try again", file+i)
+            return JsonResponse({'result': 'failure'})
 
         user = authenticate(email=email, password=passs)
 
         if user:
             login(request, user)
-            return JsonResponse({'result' : 'success'})
+            return JsonResponse({'result': 'success'})
         else:
-            return JsonResponse({'result' : 'failure'})
+            return JsonResponse({'result': 'failure'})
     else:
         form = SignUpForm()
         return render(request, 'myapp/signup.html', {'form': form})
@@ -70,12 +71,11 @@ def signup_view(request):
 def home_view(request):
     context = {}
     user = request.user
-    print("--------------",user.email)
+    print("--------------", user.email)
     MailList = ReadMails(user.email, user.gpass)
     print("Printing in views")
     if not user.is_authenticated:
         return redirect("myapp:first")
-
 
     if not user.is_active:
         return redirect("myapp:auth")
@@ -83,9 +83,10 @@ def home_view(request):
     if request.method == 'POST':
         flag = True
         file = 'test'
-        i='0'
-        
-        texttospeech("You are logged into your account. What would you like to do ?", file + i)
+        i = '0'
+
+        texttospeech(
+            "You are logged into your account. What would you like to do ?", file + i)
         i = i + str(1)
         while (flag):
             texttospeech(
@@ -101,25 +102,25 @@ def home_view(request):
             act = act.lower()
             if act == 'yes':
                 continue
-            elif act == '1' or act=='one':
+            elif act == '1' or act == 'one':
                 return JsonResponse({'result': 'compose'})
-            elif act == '2' or act=='two':
+            elif act == '2' or act == 'two':
                 return JsonResponse({'result': 'inbox'})
-            elif act == '3' or act=='three':
+            elif act == '3' or act == 'three':
                 return JsonResponse({'result': 'sent'})
-            elif act == '4' or act=='four' or act=='fore' or act=='for':
-                ans = Read(MailList,file,i)
+            elif act == '4' or act == 'four' or act == 'fore' or act == 'for':
+                ans = Read(MailList, file, i)
                 print(ans)
                 if ans >= 0:
                     print("reached on line 114")
-                    return JsonResponse({'result': 'read' , 'id':ans})
-            elif act == '9' or act=='nine':
+                    return JsonResponse({'result': 'read', 'id': ans})
+            elif act == '9' or act == 'nine':
                 texttospeech(
                     "You have been logged out of your account and now will be redirected back to the login page.",
                     file + i)
                 i = i + str(1)
                 return JsonResponse({'result': 'logout'})
-            elif act == '0' or act=='zero':
+            elif act == '0' or act == 'zero':
                 texttospeech("Repeating again", file + i)
                 i = i + str(1)
                 continue
@@ -128,17 +129,18 @@ def home_view(request):
                 i = i + str(1)
                 continue
 
-    return render(request, 'myapp/home.html', {'userobj':user, 'MailList':MailList})
+    return render(request, 'myapp/home.html', {'userobj': user, 'MailList': MailList})
 
 
-def Read(MailList,file,i):
-    for j in range(0,len(MailList)):
+def Read(MailList, file, i):
+    for j in range(0, len(MailList)):
         k = MailList[j]
-        texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is "+k.subject+". Do you want to read it? say yes to read or no to continue."  ,file+i)
+        texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is " +
+                     k.subject+". Do you want to read it? say yes to read or no to continue.", file+i)
         i = i + str(1)
         say = speechtotext(10)
         print(say)
-        if say=='yes' or say=="Yes" or say=="Yes Yes":
+        if say == 'yes' or say == "Yes" or say == "Yes Yes":
             return j
         else:
             continue
@@ -147,19 +149,20 @@ def Read(MailList,file,i):
 
 def ActionVoice():
     flag = True
-    addr=''
-    passs=''
+    addr = ''
+    passs = ''
     while (flag):
         texttospeech("Enter your"+email, file + i)
         i = i + str(1)
         addr = speechtotext(10)
         if addr != 'N':
-            texttospeech("You meant " + addr + " say yes to confirm or no to enter again", file + i)
-            
+            texttospeech("You meant " + addr +
+                         " say yes to confirm or no to enter again", file + i)
+
             i = i + str(1)
             say = speechtotext(10)
             print(say)
-            if say == 'yes' or say == 'Yes' or say=='yes yes':
+            if say == 'yes' or say == 'Yes' or say == 'yes yes':
                 flag = False
                 addr = addr.strip()
                 addr = addr.replace(' ', '')
@@ -169,6 +172,7 @@ def ActionVoice():
         else:
             texttospeech("could not understand what you meant:", file + i)
             i = i + str(1)
+
 
 def first(request):
     context = {}
@@ -216,77 +220,81 @@ def speechtotext(duration):
 
 
 def convert_special_char(text):
-    temp=text
-    special_chars = ['dot','underscore','dollar','hash','star','plus','minus','space','dash','at the rate','attherate', 'zero']
+    temp = text
+    special_chars = ['dot', 'underscore', 'dollar', 'hash', 'star',
+                     'plus', 'minus', 'space', 'dash', 'at the rate', 'attherate', 'zero']
     for character in special_chars:
         while(True):
-            pos=temp.find(character)
+            pos = temp.find(character)
             if pos == -1:
                 break
-            else :
+            else:
                 if character == 'dot':
-                    temp=temp.replace('dot','.')
+                    temp = temp.replace('dot', '.')
                 elif character == 'underscore':
-                    temp=temp.replace('underscore','_')
+                    temp = temp.replace('underscore', '_')
                 elif character == 'zero':
                     temp = temp.replace('zero', '0')
                 elif character == 'dollar':
-                    temp=temp.replace('dollar','$')
+                    temp = temp.replace('dollar', '$')
                 elif character == 'hash':
-                    temp=temp.replace('hash','#')
+                    temp = temp.replace('hash', '#')
                 elif character == 'star':
-                    temp=temp.replace('star','*')
+                    temp = temp.replace('star', '*')
                 elif character == 'plus':
-                    temp=temp.replace('plus','+')
+                    temp = temp.replace('plus', '+')
                 elif character == 'minus':
-                    temp=temp.replace('minus','-')
+                    temp = temp.replace('minus', '-')
                 elif character == 'space':
                     temp = temp.replace('space', '')
                 elif character == 'dash':
-                    temp=temp.replace('dash','-')
+                    temp = temp.replace('dash', '-')
                 elif character == 'at the rate':
-                    temp=temp.replace('at the rate','@')
+                    temp = temp.replace('at the rate', '@')
                 elif character == 'attherate':
-                    temp=temp.replace('attherate','@')
+                    temp = temp.replace('attherate', '@')
     return temp.strip()
+
 
 def logout_view(request):
     logout(request)
     return redirect("myapp:first")
 
 
-def introVoice(email,file,i):
+def introVoice(email, file, i):
     flag = True
-    addr=''
-    passs=''
+    addr = ''
+    passs = ''
     while (flag):
         texttospeech("Enter your"+email, file + i)
         i = i + str(1)
         addr = speechtotext(10)
         if addr != 'N':
-            texttospeech("You meant " + addr + " say yes to confirm or  no to enter again or exit to terminate the program", file + i)
-               
+            texttospeech("You meant " + addr +
+                         " say yes to confirm or  no to enter again or exit to terminate the program", file + i)
+
             i = i + str(1)
             say = speechtotext(10)
             print(say)
-            if say == 'yes' or say == 'Yes' or say=='yes yes':
+            if say == 'yes' or say == 'Yes' or say == 'yes yes':
                 flag = False
                 addr = addr.strip()
                 addr = addr.replace(' ', '')
                 addr = addr.lower()
                 addr = convert_special_char(addr)
                 return addr
-            elif say=='exit':
+            elif say == 'exit':
                 flag = False
                 time.sleep(60)
-                texttospeech("The application will restart in a minute",file+i)
-                i=i + str(1)
+                texttospeech(
+                    "The application will restart in a minute", file+i)
+                i = i + str(1)
                 return JsonResponse({'result': 'failure', 'message': 'message'})
-           
+
         else:
             texttospeech("could not understand what you meant:", file + i)
             i = i + str(1)
-        
+
 
 def login_view(request):
     context = {}
@@ -303,14 +311,14 @@ def login_view(request):
         texttospeech(text1, file + i)
         i = i + str(1)
 
-        emailId = introVoice('email',file,i)
+        emailId = introVoice('email', file, i)
 
         account = User.objects.filter(email=emailId).first()
-        print("---------------->",account)
+        print("---------------->", account)
 
         if account:
             print("User Exists")
-            passs = introVoice("Password",file,i)
+            passs = introVoice("Password", file, i)
             # form = LoginForm(email=addr,password=passs,auth_code='1010101010')
             # if account:
             # auth_code = '1010101010'
@@ -319,13 +327,14 @@ def login_view(request):
 
             if user is not None:
                 if not account.is_active:
-                    print("Your account is not active, create authentication code to continue")
+                    print(
+                        "Your account is not active, create authentication code to continue")
                     message = 'Account not active'
-                    texttospeech("Your account is not active, create authentication code to continue", file + i)
+                    texttospeech(
+                        "Your account is not active, create authentication code to continue", file + i)
                     i = i + str(1)
                     login(request, user)
                     return JsonResponse({'result': 'failure-active', 'message': message})
-
 
                 login(request, user)
                 return JsonResponse({'result': 'success'})
@@ -335,8 +344,8 @@ def login_view(request):
                 i = i + str(1)
                 return JsonResponse({'result': 'failure', 'message': message})
         else:
-            print(addr,"does not exist!")
-            texttospeech("Please enter correct email address!",file+i)
+            print(addr, "does not exist!")
+            texttospeech("Please enter correct email address!", file+i)
             i = i + str(1)
             message = 'Please enter correct email address!'
             return JsonResponse({'result': 'failure', 'message': message})
@@ -348,9 +357,9 @@ def login_view(request):
 
 def auth_view(request):
     file = 'test'
-    i='1'
+    i = '1'
     user = request.user
-    if request.method=='GET':
+    if request.method == 'GET':
         context = {}
         print('testng')
         if not user.is_authenticated:
@@ -358,13 +367,15 @@ def auth_view(request):
 
         if user.is_active:
             # verify Auth Code
-            texttospeech("Account already active, enter 10 digit authentication code using mouse clicks", file + i)
+            texttospeech(
+                "Account already active, enter 10 digit authentication code using mouse clicks", file + i)
             i = i + str(1)
             print("Account already active, enter authentication code using mouse clicks")
 
         if not user.is_active:
             # create Auth Code
-            texttospeech("Enter 10 digit authentication code using mouse clicks to continue", file + i)
+            texttospeech(
+                "Enter 10 digit authentication code using mouse clicks to continue", file + i)
             i = i + str(1)
             print("Account not active, create auth code")
 
@@ -378,30 +389,121 @@ def auth_view(request):
         print(user.auth_code)
         if user.auth_code:
             if user.auth_code == code:
-                texttospeech("User authentication completed",file+i)
+                texttospeech("User authentication completed", file+i)
                 i = i + str(1)
                 return redirect('myapp:home')
             else:
-                texttospeech("Authentication failed , please try again!",file+i)
+                texttospeech(
+                    "Authentication failed , please try again!", file+i)
                 i = i + str(1)
         else:
             u = User.objects.filter(email=user.email).first()
             u.auth_code = code
             u.is_active = True
             u.save()
-            texttospeech("Account successfully created",file+i)
+            texttospeech("Account successfully created", file+i)
             i = i + str(1)
             return redirect('myapp:home')
-        return render(request,'myapp/login2.html')
+        return render(request, 'myapp/login2.html')
 
 
 def compose_view(request):
-    print("Reached Compose View")
+    file = 'test'
+    i = '1'
+    user = request.user
+    if request.method == 'POST':
+        print("hit post request in compose view")
+        # entering sender's email address
+        recievers_addr = introVoice('Senders Address', file, i)
+        print("recievers_addr-->")
+        print(recievers_addr)
+        subject = introVoice('Subject', file, i)
+        print("subject-->")
+        print(subject)
+        # entering content
+        msg = composeMessage(file, i)
+        print("msg---->")
+        print(msg)
+        read = composeVoice(
+            "Do you want to read it. Say yes to read or no to proceed further", file, i)
+        print(read)
+        if read == "yes":
+            texttospeech(msg, file+i)
+            i = i+str(1)
+        composeAction = composeVoice(
+            "Say delete to discard the draft or rewrite to compose again or send to send the draft", file, i)
+        print(composeAction)
+        if composeAction == 'delete':
+            print("deleting")
+            msg = ""
+            texttospeech(
+                "Draft has been deleted and you have been redirected to home page", file+i)
+            i = i+str(1)
+            return JsonResponse({'result': 'success'})
+        elif composeAction == 'rewrite':
+            print("rewriting")
+            return JsonResponse({'result': 'rewrite'})
+        elif composeAction == 'send':
+            u = User.objects.filter(email=user.email).first()
+            sendMail(u.email, u.gpass, recievers_addr, subject, msg)
+            print("mail sent")
+            texttospeech(
+                "Mail sent successfully. You are now redirected to home page", file+i)
+            i = i+str(1)
+            return JsonResponse({'result': 'success'})
+    print("hit get request in compose view")
     return render(request, 'myapp/compose.html')
+
+
+def composeMessage(file, i):
+    flag = True
+    msg = ''
+    while (flag):
+
+        sentence = composeVoice("Enter the sentence", file, i)
+        say = composeVoice(
+            "Say continue to keep writing further or finish if you are done ", file, i)
+        print(say)
+        if say == 'continue' or say == 'Continue':
+            msg = msg+sentence
+            sentence = ""
+        elif say == 'finish':
+            flag = False
+            msg = msg+sentence
+            return msg
+
+
+def composeVoice(msg, file, i):
+    flag = True
+    addr = ''
+    passs = ''
+    while (flag):
+        texttospeech(msg, file + i)
+        i = i + str(1)
+        addr = speechtotext(10)
+        if addr != 'N':
+            texttospeech("You meant " + addr +
+                         " say yes to confirm or no to enter again", file + i)
+            i = i + str(1)
+            say = speechtotext(10)
+            print(say)
+            if say == 'yes' or say == 'Yes' or say == 'yes yes':
+                flag = False
+                addr = addr.strip()
+                #addr=addr.replace(' ','')
+                addr = addr.lower()
+                addr = convert_special_char(addr)
+                return addr
+
+        else:
+            texttospeech("could not understand what you meant:", file + i)
+            i = i + str(1)
+
 
 def inbox_view(request):
     print("Reached Inbox View")
     return render(request, 'myapp/compose.html')
+
 
 def sent_view(request):
     print("Reached Sent View")
@@ -413,31 +515,64 @@ def sent_view(request):
 #     MailList = ReadMails(user.email, user.gpass)
 #     return render(request, 'myapp/read.html')
 
-def read_view(request,id):
-    if request.method == 'GET':
-        # print(request.GET.get('id'))
-        # id = request.GET.get('id')
-        id = int(id)
-        user = request.user
-        MailList = ReadMails(user.email, user.gpass)
-        mail = MailList[id]
-        print("Reached read View")
-        i = '1'
-        file = "test"
-        # for mail in mails:
-        # for j in range(0,len(MailList)):
-        #     k = MailList[j]
-        #     texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is "+k.subject+". Do you want to read it? say yes to read or no to continue."  ,file+i)
-        #     i = i + str(1)
-        #     say = speechtotext(10)
-        #     print(say)
-        #     if say=='yes' or say=="Yes" or say=="Yes Yes":
-        #         return render(request,'myapp/read.html',{'mail':k})
-        #     else:
-        #         continue
-        return render(request,'myapp/read.html',{'mail':mail})
 
-    else:
-        print("hjcbcnmcbm")
-        print(request)
+def read_view(request, id):
+    id = int(id)
+    user = request.user
+    MailList = ReadMails(user.email, user.gpass)
+    mail = MailList[id]
+    print("Reached read View")
+    i = '1'
+    file = "test"
+    if request.method == 'GET':
+        return render(request,'myapp/read.html',{'mail':mail,'mail_id':id})
+        
+
+    if request.method == 'POST':
+        k = mail
+        texttospeech(k.body, file+i)
+        i = i + str(1)
+        say = composeVoice("Do you want to reply to this mail, say reply to reply or continue to proceed",file,i)
+        i = i + str(1)
+        if say == "reply" or say == 'replay':
+            
+            # entering content
+            msg = composeMessage(file, i)
+            print("msg---->")
+            print(msg)
+            read = composeVoice(
+                "Do you want to read it. Say yes to read or no to proceed further", file, i)
+            print(read)
+            if read == "yes":
+                texttospeech(msg, file+i)
+                i = i+str(1)
+            composeAction = composeVoice(
+                "Say delete to discard the draft or rewrite to compose again or send to send the draft", file, i)
+            print(composeAction)
+            if composeAction == 'delete':
+                print("deleting")
+                msg = ""
+                texttospeech(
+                    "Draft has been deleted and you have been redirected to home page", file+i)
+                i = i+str(1)
+                return JsonResponse({'result': 'success'})
+            elif composeAction == 'rewrite':
+                print("rewriting")
+                return JsonResponse({'result': 'rewrite'})
+            elif composeAction == 'send':
+                u = User.objects.filter(email=user.email).first()
+                replyMail(u.email, u.gpass, k.email, k.subject, msg)
+                print("mail sent")
+                # texttospeech(
+                #     "Mail sent successfully. You are now redirected to home page", file+i)
+                # i = i+str(1)
+        say = composeVoice("Do you want to forward this mail, say yes to forward or no to proceed",file,i)
+        i = i + str(1)
+        if say == 'forward':
+            emailId = introVoice('email', file, i)
+            sendMail(user.email, user.gpass, emailId, k.subject, k.body)
+            print("mail sent")
+        texttospeech(
+            "Mail sent successfully. You are now redirected to home page", file+i)
+        i = i+str(1)
         return JsonResponse({'result': 'success'})
