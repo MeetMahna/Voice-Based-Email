@@ -4,7 +4,7 @@ import imaplib
 import email
 import os
 import traceback 
-from myapp.DecodeMail import Mail
+from .DecodeMail import Mail
 from .models import User
 from email.message import EmailMessage
 

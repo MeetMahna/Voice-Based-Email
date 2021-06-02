@@ -12,7 +12,7 @@ import os
 from playsound import playsound
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from myapp.EmailFunction import *
+from .EmailFunction import *
 
 
 
@@ -147,6 +147,7 @@ def Read(MailList,file,i):
 
 def ActionVoice():
     flag = True
+    file = 'test'
     addr=''
     passs=''
     while (flag):
