@@ -104,28 +104,17 @@
 	<script>
 		function SendPostRequestHome(event){
 			$.ajax({
-			url: "{% url 'myapp:home' %}",
+			url: "{% url 'myapp:sent' %}",
 			method: 'POST',
 			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
 			success: function (data) {
-				if(data.result == 'compose'){
-					window.location = "{% url 'myapp:compose' %}";
-				}
-
-				else if(data.result == 'logout'){
-					window.location = "{% url 'myapp:logout' %}";
-				}
-				else if(data.result == 'inbox'){
-					window.location = "{% url 'myapp:inbox' %}";
-				}
-
-				else if(data.result == 'sent'){
+				if(data.result == 'delete'){
 					window.location = "{% url 'myapp:sent' %}";
 
 				}
 				else if(data.result == 'read'){
 					console.log(data.id);
-					window.location = '/read/'+data.id ;
+					window.location = '/read_sent/'+data.id ;
 
 				}
 			}
