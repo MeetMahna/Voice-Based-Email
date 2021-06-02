@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from django.urls import path
-from .views import home_view, signup_view, login_view, logout_view, first, auth_view, compose_view, inbox_view, read_view, sent_view
+from .views import home_view, signup_view, login_view, logout_view, first, auth_view, compose_view, inbox_view, read_view, sent_view,read_sent_view
 
 app_name = 'myapp'
 
@@ -17,6 +17,6 @@ urlpatterns = [
     path('sent/', sent_view, name='sent'),
     # url(r'read/(?P<id>[0-9]+)$',read_view, name='read'),
     path('read/<id>',read_view, name='read'),
-
+    path('read_sent/<id>',read_sent_view, name='read_sent'),
 
 ]

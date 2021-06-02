@@ -129,7 +129,8 @@ def home_view(request):
                 i = i + str(1)
                 continue
 
-    return render(request, 'myapp/home.html', {'userobj': user, 'MailList': MailList})
+    return render(request, 'myapp/home.html', {'userobj': user, 'MailList': MailList,'page_heading':'INBOX'})
+
 
 
 def Read(MailList, file, i):
@@ -448,7 +449,7 @@ def compose_view(request):
             sendMail(u.email, u.gpass, recievers_addr, subject, msg)
             print("mail sent")
             texttospeech(
-                "Mail sent successfully. You are now redirected to home page", file+i)
+                "Mail sent successfully. You are now redirected to sent folder", file+i)
             i = i+str(1)
             return JsonResponse({'result': 'success'})
     print("hit get request in compose view")
@@ -506,14 +507,104 @@ def inbox_view(request):
 
 
 def sent_view(request):
-    print("Reached Sent View")
-    return render(request, 'myapp/compose.html')
+    user = request.user
+    print("--------------", user.email)
+    MailList = read_sentmail(user.email, user.gpass)
+    if request.method == 'GET':
+        return render(request, 'myapp/sent.html',{'userobj': user, 'MailList': MailList,'page_heading':'SENT'})
 
-# def read_view(request,mail):
-#     print("Reached read View")
-#     UserObj = User.objects.filter(email=email).first()
-#     MailList = ReadMails(user.email, user.gpass)
-#     return render(request, 'myapp/read.html')
+    if request.method == 'POST':
+        flag = True
+        file = 'test'
+        i = '0'
+        ans = ReadSent(MailList,file,i)
+        if ans >= 0:
+            print("reached on line 522")
+            return JsonResponse({'result': 'read', 'id': ans})
+
+
+
+def ReadSent(MailList, file, i):
+    for j in range(0, len(MailList)):
+        k = MailList[j]
+        texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is " +
+                     k.subject+". Do you want to read it? say yes to read or delete to delete or continue to proceed further.", file+i)
+        i = i + str(1)
+        say = speechtotext(10)
+        print(say)
+        if say == 'yes' or say == "Yes" or say == "Yes Yes":
+            return j
+        if say == 'delete':
+            pass
+        else:
+            continue
+    return -1
+
+
+def read_sent_view(request,id):
+    id = int(id)
+    user = request.user
+    MailList = read_sentmail(user.email, user.gpass)
+    mail = MailList[id]
+    print("Reached read sent View")
+    i = '1'
+    file = "test"
+    if request.method == 'GET':
+        return render(request,'myapp/readSent.html',{'mail':mail,'mail_id':id})
+        
+
+    if request.method == 'POST':
+        k = mail
+        texttospeech(k.body, file+i)
+        i = i + str(1)
+        say = composeVoice("Do you want to reply to this mail, say reply to reply or continue to proceed",file,i)
+        i = i + str(1)
+        if say == "reply" or say == 'replay':
+            
+            # entering content
+            msg = composeMessage(file, i)
+            print("msg---->")
+            print(msg)
+            read = composeVoice(
+                "Do you want to read it. Say yes to read or no to proceed further", file, i)
+            print(read)
+            if read == "yes":
+                texttospeech(msg, file+i)
+                i = i+str(1)
+            composeAction = composeVoice(
+                "Say delete to discard the draft or rewrite to compose again or send to send the draft", file, i)
+            print(composeAction)
+            if composeAction == 'delete':
+                print("deleting")
+                msg = ""
+                texttospeech(
+                    "Draft has been deleted and you have been redirected to home page", file+i)
+                i = i+str(1)
+                return JsonResponse({'result': 'readsentsuccess'})
+            elif composeAction == 'rewrite':
+                print("rewriting")
+                return JsonResponse({'result': 'rewrite'})
+            elif composeAction == 'send':
+                u = User.objects.filter(email=user.email).first()
+                replyMail(u.email, u.gpass, k.email, k.subject, msg)
+                print("mail sent")
+                # texttospeech(
+                #     "Mail sent successfully. You are now redirected to home page", file+i)
+                # i = i+str(1)
+        say = composeVoice("Do you want to forward this mail, say yes to forward or no to proceed",file,i)
+        i = i + str(1)
+        if say == 'yes':
+            emailId = introVoice('email', file, i)
+            sendMail(user.email, user.gpass, emailId, k.subject, k.body)
+            print("mail sent")
+            texttospeech(
+                "Mail sent successfully. You are now redirected to home page", file+i)
+            i = i+str(1)
+            return JsonResponse({'result': 'readsentsuccess'})
+        texttospeech(
+                "You are now redirected to home page", file+i)
+        i = i+str(1)
+        return JsonResponse({'result': 'readsentsuccess'})
 
 
 def read_view(request, id):
@@ -572,7 +663,11 @@ def read_view(request, id):
             emailId = introVoice('email', file, i)
             sendMail(user.email, user.gpass, emailId, k.subject, k.body)
             print("mail sent")
+            texttospeech(
+                "Mail sent successfully. You are now redirected to home page", file+i)
+            i = i+str(1)
+            return JsonResponse({'result': 'success'})
         texttospeech(
-            "Mail sent successfully. You are now redirected to home page", file+i)
+                "You are now redirected to home page", file+i)
         i = i+str(1)
         return JsonResponse({'result': 'success'})

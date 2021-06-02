@@ -170,7 +170,7 @@
 <script>
     function SendPostRequestHome(event) {
         $.ajax({
-            url: "{% url 'myapp:read' id=mail_id %}",
+            url: "{% url 'myapp:read_sent' id=mail_id %}",
             method: 'POST',
             data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
             success: function (data) {

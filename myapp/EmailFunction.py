@@ -4,7 +4,7 @@ import imaplib
 import email
 import os
 import traceback 
-from myapp.DecodeMail import Mail
+from myapp.DecodeMail import *
 from .models import User
 from email.message import EmailMessage
 
@@ -97,3 +97,57 @@ def replyMail(userid,gpass,receiverMail,sub,message):
     server.login(userid, gpass)
     server.send_message(msg)
     server.quit()
+
+
+
+def read_sentmail(id, gpass):
+    try:
+        mail = imaplib.IMAP4_SSL(SMTP_SERVER)
+        mail.login(id, gpass)
+        mail.select(SENT) 
+
+        data = mail.search(None, 'ALL')
+        mail_ids = data[1]
+        id_list = mail_ids[0].split()   
+        first_email_id = int(id_list[0])
+        latest_email_id = int(id_list[-1])
+        MailList = []
+        for i in range(latest_email_id,first_email_id, -1)[:20]:
+            data = mail.fetch(str(i), '(RFC822)' )
+            for response_part in data:
+                arr = response_part[0]
+                if isinstance(arr, tuple):
+                    msg = email.message_from_string(str(arr[1],'utf-8'))
+                    auth_results = msg.get("Authentication-Results", None)
+                    content_type = msg.get_content_type()
+                    body = msg.get_payload()
+
+                    if msg.is_multipart():
+                        for part in msg.walk():
+                            content_type = part.get_content_type()
+                            content_disposition = str(part.get("Content-Disposition"))
+                            try:
+                                body = part.get_payload(decode=True).decode()
+                            except:
+                                pass
+                            if content_type == "text/plain" and "attachment" not in content_disposition:
+                                m = ReadSentMailDecode(msg,body)   
+                                MailList.append(m)            
+                    if(content_type == "text/plain"):
+                        m = ReadSentMailDecode(msg,body)   
+                        MailList.append(m)
+        for m in MailList:
+            print("From: "+m.email)
+            # print("To: "+m.to)
+            # print("Date: "+m.date)
+            print("subject: "+m.subject)  
+            # print("body: "+m.body)
+        return MailList
+                    
+
+    except Exception as e:
+        traceback.print_exc() 
+        print(str(e))
+
+
+# read_sentmail('voicemail015@gmail.com','voicemail015@')
