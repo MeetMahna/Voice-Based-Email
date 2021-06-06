@@ -104,22 +104,18 @@
 	<script>
 		function SendPostRequestHome(event){
 			$.ajax({
-			url: "{% url 'myapp:sent' %}",
+			url: "{% url 'myapp:trash' %}",
 			method: 'POST',
 			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
 			success: function (data) {
-				if(data.result == 'delete'){
-					window.location = "{% url 'myapp:sent' %}";
 
-				}
-				else if(data.result == 'read'){
-					console.log(data.id);
-					window.location = '/read_sent/'+data.id ;
-
-				}
-				else if(data.result == 'trash'){
+				if(data.result == 'read'){
 					console.log(data.id);
 					window.location = '/read_trash/'+data.id ;
+
+				}
+				else if(data.result == 'home'){
+					window.location = "{% url 'myapp:home' %}" ;
 
 				}
 			}
