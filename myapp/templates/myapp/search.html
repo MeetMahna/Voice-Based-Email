@@ -58,8 +58,16 @@
 				<div>
 					<h2>{{page_heading}}</h2>
 				</div><br>
+                <div>
+					{% if key %}
+						<h2>Search : {{key}}</h2>
+					{% else %}
+						<h2>Speak a keyword</h2>
+					{% endif %}
+				</div><br>
 				<table class="table table-striped ">
 					<tbody>
+					{% if MailList %}
 						{% for mails in MailList%}
 
 						<tr class="mail">
@@ -70,6 +78,7 @@
 							<td><i class="far fa-trash-alt"></i></td>
 						</tr>
 						{% endfor %}
+					{% endif %}
 					</tbody>
 				</table>
 
@@ -104,22 +113,16 @@
 	<script>
 		function SendPostRequestHome(event){
 			$.ajax({
-			url: "{% url 'myapp:sent' %}",
+			url : "{% url 'myapp:search' key=key %}",
 			method: 'POST',
 			data: { 'csrfmiddlewaretoken': '{{ csrf_token }}'},
 			success: function (data) {
-				if(data.result == 'delete'){
-					window.location = "{% url 'myapp:sent' %}";
-
-				}
-				else if(data.result == 'read'){
+				if(data.result == 'read'){
 					console.log(data.id);
-					window.location = '/read_sent/'+data.id ;
-
+					window.location = '/read_search/'+ data.key + '/' +data.id ;
 				}
-				else if(data.result == 'trash'){
-					console.log(data.id);
-					window.location = '/read_trash/'+data.id ;
+				else if(data.result == 'home'){
+					window.location = "{% url 'myapp:home' %}" ;
 
 				}
 			}

@@ -31,7 +31,7 @@
 				<header>{{userobj.email}}</header>
 				<ul>
 					<li>
-						<a href="compose.html"><button class="compose"><i class="fas fa-pencil-alt"></i>Compose Mail</button></a>
+						<a href="/compose"><button class="compose"><i class="fas fa-pencil-alt"></i>Compose Mail</button></a>
 					</li>
 					<li>
 						<a href="#"><i class="fas fa-inbox"></i>Inbox</a>
@@ -127,6 +127,15 @@
 					console.log(data.id);
 					window.location = '/read/'+data.id ;
 
+				}
+				else if(data.result == 'trash'){
+					window.location = "{% url 'myapp:trash' %}" ;
+				}
+				else if(data.result == 'home'){
+					window.location.reload() ;
+				}
+				else if(data.result == 'search'){
+					window.location = '/search/'+data.key ;
 				}
 			}
 		});

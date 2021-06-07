@@ -12,7 +12,7 @@ import os
 from playsound import playsound
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from myapp.EmailFunction import *
+from .EmailFunction import *
 
 
 def signup_view(request):
@@ -71,14 +71,16 @@ def signup_view(request):
 def home_view(request):
     context = {}
     user = request.user
-    print("--------------", user.email)
-    MailList = ReadMails(user.email, user.gpass)
     print("Printing in views")
     if not user.is_authenticated:
         return redirect("myapp:first")
 
     if not user.is_active:
         return redirect("myapp:auth")
+
+    print("--------------", user.email)
+    print("=========", user.gpass)
+    MailList = ReadMails(user.email, user.gpass)
 
     if request.method == 'POST':
         flag = True
@@ -89,17 +91,23 @@ def home_view(request):
             "You are logged into your account. What would you like to do ?", file + i)
         i = i + str(1)
         while (flag):
+            action = ''
             texttospeech(
                 # "To compose an email say 1."
                 # "To open Inbox folder say 2. "
                 # "To open Sent folder say 3. "
                 # "To Read mails say 4. "
+                # "To Read Trash Mails say 5. "
+                # "To search an email say 6. "
                 # "To Logout say 9. "
                 "Say 0 to hear again.",
                 file + i)
             i = i + str(1)
             act = speechtotext(5)
+            act = act.strip()
+            act = act.replace(' ', '')
             act = act.lower()
+
             if act == 'yes':
                 continue
             elif act == '1' or act == 'one':
@@ -108,12 +116,31 @@ def home_view(request):
                 return JsonResponse({'result': 'inbox'})
             elif act == '3' or act == 'three':
                 return JsonResponse({'result': 'sent'})
-            elif act == '4' or act == 'four' or act == 'fore' or act == 'for':
-                ans = Read(MailList, file, i)
-                print(ans)
-                if ans >= 0:
-                    print("reached on line 114")
-                    return JsonResponse({'result': 'read', 'id': ans})
+            elif act == '4' or act == 'four' or act == 'fore' or act == 'for' or act == 'aur':
+                ans, action = Read(MailList, file, i)
+                print(ans, action)
+                if action == 'read':
+                    if ans >= 0:
+                        print("reached on line 114")
+                        return JsonResponse({'result': 'read', 'id': ans})
+                elif action == 'delete':
+                    if ans >= 0:
+                        # print("reached on line 114")
+                        # return JsonResponse({'result': 'delete', 'id': ans})
+
+                        deletemails(ans, request.user.email, request.user.gpass)
+                        texttospeech('Mail moved to trash!', file)
+                        return JsonResponse({'result': 'home'})
+
+            elif act == '5' or act == 'five':
+                return JsonResponse({'result': 'trash'})
+
+            elif act == '6' or act == 'six' or act == 'pix' or act=='sex':
+                texttospeech("Please speak a keyword to search", file+i)
+                i = i + str(1)
+                say = speechtotext(10)
+                return JsonResponse({'result': 'search', 'key':say})
+
             elif act == '9' or act == 'nine':
                 texttospeech(
                     "You have been logged out of your account and now will be redirected back to the login page.",
@@ -129,29 +156,84 @@ def home_view(request):
                 i = i + str(1)
                 continue
 
-    return render(request, 'myapp/home.html', {'userobj': user, 'MailList': MailList,'page_heading':'INBOX'})
-
+    return render(request, 'myapp/home.html', {'userobj': user, 'MailList': MailList,  'page_heading':'INBOX'})
 
 
 def Read(MailList, file, i):
     for j in range(0, len(MailList)):
         k = MailList[j]
         texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is " +
-                     k.subject+". Do you want to read it? say yes to read or no to continue.", file+i)
+                     k.subject+". Do you want to read it? say yes to read, no to continue or delete to move mail to trash", file+i)
         i = i + str(1)
         say = speechtotext(10)
         print(say)
+        action = ''
         if say == 'yes' or say == "Yes" or say == "Yes Yes":
-            return j
+            action = 'read'
+            return j, action
+        elif say == 'delete':
+            action = 'delete'
+            return j, action
         else:
             continue
     return -1
+
+
+# def SearchList(MailList, file, i):
+#     for j in range(0, len(MailList)):
+#         k = MailList[j]
+#         texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is " +
+#                      k.subject+". Do you want to read it? say yes to read, no to continue or delete to move mail to trash", file+i)
+#         i = i + str(1)
+#         say = speechtotext(10)
+#         print(say)
+#         action = ''
+#         if say == 'yes' or say == "Yes" or say == "Yes Yes":
+#             action = 'read'
+#             return j, action
+#         elif say == 'delete':
+#             action = 'delete'
+#             return j, action
+#         else:
+#             continue
+#     return -1
+
+def search_view(request, key):
+    print("=============************", key)
+    user = request.user
+    file = 'test'
+    i = '0'
+    print("--------------", user.email)
+    MailList = searchMails(user.email, user.gpass, key)
+    print("**********************", MailList)
+    if request.method == 'GET':
+        if MailList:
+            return render(request, 'myapp/search.html', {'userobj': user, 'MailList': MailList, 'page_heading': 'SEARCH', 'key': key})
+
+        texttospeech("No mail with the keyword " + key + " found, Redirecting back to home", file + i)
+        return redirect('myapp:home')
+
+    elif request.method == 'POST':
+        print('+++++++++++++++++++POST')
+        flag = True
+        file = 'test'
+        i = '0'
+        ans = ReadSearch(MailList, file, i)
+        if ans >= 0:
+            print("reached on line 563")
+            return JsonResponse({'result': 'read', 'key':key, 'id': ans })
+        elif ans == -2:
+            return JsonResponse({'result': 'home'})
+        texttospeech("No more mails in Search Box, Redirecting back to Home", file + i)
+        i = i + str(1)
+        return JsonResponse({'result': 'home'})
 
 
 def ActionVoice():
     flag = True
     addr = ''
     passs = ''
+    file = 'test'
     while (flag):
         texttospeech("Enter your"+email, file + i)
         i = i + str(1)
@@ -345,7 +427,7 @@ def login_view(request):
                 i = i + str(1)
                 return JsonResponse({'result': 'failure', 'message': message})
         else:
-            print(addr, "does not exist!")
+            print(emailId, "does not exist!")
             texttospeech("Please enter correct email address!", file+i)
             i = i + str(1)
             message = 'Please enter correct email address!'
@@ -522,12 +604,15 @@ def sent_view(request):
             print("reached on line 522")
             return JsonResponse({'result': 'read', 'id': ans})
 
+        texttospeech("No more mails in Sent Box, Redirecting back to Home", file + i)
+        i = i + str(1)
+        return JsonResponse({'result': 'home'})
 
 
 def ReadSent(MailList, file, i):
     for j in range(0, len(MailList)):
         k = MailList[j]
-        texttospeech("Mail number"+str(j)+",is sent by "+k.senderName+" on "+k.date+" and Subject is " +
+        texttospeech("Mail number"+str(j)+", was sent by "+k.senderName+" on "+k.date+" and Subject is " +
                      k.subject+". Do you want to read it? say yes to read or delete to delete or continue to proceed further.", file+i)
         i = i + str(1)
         say = speechtotext(10)
@@ -541,6 +626,92 @@ def ReadSent(MailList, file, i):
     return -1
 
 
+def trash_view(request):
+    user = request.user
+    print("--------------", user.email)
+    MailList = read_trashmail(user.email, user.gpass)
+    print("**********************", MailList)
+    if request.method == 'GET':
+        return render(request, 'myapp/trash.html',{'userobj': user, 'MailList': MailList,'page_heading':'TRASH'})
+
+    if request.method == 'POST':
+        flag = True
+        file = 'test'
+        i = '0'
+        ans = ReadTrash(MailList,file,i)
+        if ans >= 0:
+            print("reached on line 563")
+            return JsonResponse({'result': 'read', 'id': ans})
+        elif ans == -2:
+            return JsonResponse({'result': 'home'})
+        texttospeech("No more mails in Trash Box, Redirecting back to Home", file + i)
+        i = i + str(1)
+        return JsonResponse({'result': 'home'})
+
+
+def ReadTrash(MailList, file, i):
+    for j in range(0, len(MailList)):
+        k = MailList[j]
+        texttospeech("Mail number"+str(j)+", was sent by "+k.senderName+" on "+k.date+" and Subject is " + k.subject +
+                     ". Do you want to read it? say yes to read or say continue to proceed further, or say back to go back to the main menu", file+i)
+        i = i + str(1)
+        say = speechtotext(5)
+        print(say)
+        if say == 'yes' or say == "Yes" or say == "Yes Yes":
+            return j
+        elif say == 'back':
+            return -2
+        else:
+            continue
+    return -1
+
+
+def ReadSearch(MailList, file, i):
+    for j in range(0, len(MailList)):
+        k = MailList[j]
+        texttospeech("Mail number"+str(j)+", was sent by "+k.senderName+" on "+k.date+" and Subject is " + k.subject +
+                     ". Do you want to read it? say yes to read or say continue to proceed further, or say back to go back to the main menu", file+i)
+        i = i + str(1)
+        say = speechtotext(5)
+        print(say)
+        if say == 'yes' or say == "Yes" or say == "Yes Yes":
+            return j
+        elif say == 'back':
+            return -2
+        else:
+            continue
+    return -1
+
+def read_trash_view(request, id):
+    id = int(id)
+    user = request.user
+    MailList = read_trashmail(user.email, user.gpass)
+    mail = MailList[id]
+    print("Reached read Trash View")
+    i = '1'
+    file = "test"
+    if request.method == 'GET':
+        return render(request, 'myapp/readTrash.html', {'mail': mail, 'mail_id': id})
+
+    if request.method == 'POST':
+        k = mail
+        flag = True
+        while flag:
+            texttospeech(k.body, file + i)
+            i = i + str(1)
+            texttospeech("Say yes to listen again or no to continue", file + i)
+            say = speechtotext(10)
+            i = i + str(1)
+            if say == 'yes' or say == 'yes yes':
+                print("Reading Trash Mail", id, "again")
+                texttospeech("Reading Mail Again", file + i)
+                i = i + str(1)
+            else:
+                flag = False
+        return JsonResponse({'result': 'readtrashsuccess'})
+
+
+
 def read_sent_view(request,id):
     id = int(id)
     user = request.user
@@ -551,7 +722,6 @@ def read_sent_view(request,id):
     file = "test"
     if request.method == 'GET':
         return render(request,'myapp/readSent.html',{'mail':mail,'mail_id':id})
-        
 
     if request.method == 'POST':
         k = mail
@@ -671,3 +841,97 @@ def read_view(request, id):
                 "You are now redirected to home page", file+i)
         i = i+str(1)
         return JsonResponse({'result': 'success'})
+
+
+# def read_view(request, id):
+#     id = int(id)
+#     user = request.user
+#     MailList = ReadMails(user.email, user.gpass)
+#     mail = MailList[id]
+#     print("Reached read View")
+#     i = '1'
+#     file = "test"
+#     if request.method == 'GET':
+#         return render(request, 'myapp/read.html', {'mail': mail, 'mail_id': id})
+#
+#     if request.method == 'POST':
+#         k = mail
+#         texttospeech(k.body, file + i)
+#         i = i + str(1)
+#         say = composeVoice("Do you want to reply to this mail, say reply to reply or continue to proceed", file, i)
+#         i = i + str(1)
+#         if say == "reply" or say == 'replay':
+#
+#             # entering content
+#             msg = composeMessage(file, i)
+#             print("msg---->")
+#             print(msg)
+#             read = composeVoice(
+#                 "Do you want to read it. Say yes to read or no to proceed further", file, i)
+#             print(read)
+#             if read == "yes":
+#                 texttospeech(msg, file + i)
+#                 i = i + str(1)
+#             composeAction = composeVoice(
+#                 "Say delete to discard the draft or rewrite to compose again or send to send the draft", file, i)
+#             print(composeAction)
+#             if composeAction == 'delete':
+#                 print("deleting")
+#                 msg = ""
+#                 texttospeech(
+#                     "Draft has been deleted and you have been redirected to home page", file + i)
+#                 i = i + str(1)
+#                 return JsonResponse({'result': 'success'})
+#             elif composeAction == 'rewrite':
+#                 print("rewriting")
+#                 return JsonResponse({'result': 'rewrite'})
+#             elif composeAction == 'send':
+#                 u = User.objects.filter(email=user.email).first()
+#                 replyMail(u.email, u.gpass, k.email, k.subject, msg)
+#                 print("mail sent")
+#                 # texttospeech(
+#                 #     "Mail sent successfully. You are now redirected to home page", file+i)
+#                 # i = i+str(1)
+#         say = composeVoice("Do you want to forward this mail, say yes to forward or no to proceed", file, i)
+#         i = i + str(1)
+#         if say == 'forward':
+#             emailId = introVoice('email', file, i)
+#             sendMail(user.email, user.gpass, emailId, k.subject, k.body)
+#             print("mail sent")
+#             texttospeech(
+#                 "Mail sent successfully. You are now redirected to home page", file + i)
+#             i = i + str(1)
+#             return JsonResponse({'result': 'success'})
+#         texttospeech(
+#             "You are now redirected to home page", file + i)
+#         i = i + str(1)
+#         return JsonResponse({'result': 'success'})
+
+
+def read_search_view(request, key, id):
+    id = int(id)
+    user = request.user
+    MailList = searchMails(user.email, user.gpass, key)
+    mail = MailList[id]
+    print("Reached read Search View")
+    i = '1'
+    file = "test"
+    if request.method == 'GET':
+        return render(request, 'myapp/readSearch.html', {'mail': mail, 'id': id, 'key':key})
+
+    if request.method == 'POST':
+        k = mail
+        flag = True
+        while flag:
+            texttospeech(k.body, file + i)
+            i = i + str(1)
+            texttospeech("Say yes to listen again or no to continue", file + i)
+            say = speechtotext(10)
+            i = i + str(1)
+            if say == 'yes' or say == 'yes yes':
+                print("Reading Trash Mail", id, "again")
+                texttospeech("Reading Mail Again", file + i)
+                i = i + str(1)
+            else:
+                flag = False
+        return JsonResponse({'result': 'readsearchsuccess', 'key': key})
